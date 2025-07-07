@@ -1,64 +1,12 @@
-Cross-Framework Design System built with Ionic + Stencil, designed for accessibility, theme flexibility, and reusable Web Components compatible with Angular, React, Vue, and Vanilla JavaScript.
-
-
-# 🌐 Corporate Design System
-
-A modern, reusable, and accessible **Design System** built with [StencilJS](https://stenciljs.com/) and [Ionic Framework](https://ionicframework.com/) to deliver **Web Components** ready for use across **Angular**, **React**, **Vue**, and **Vanilla JavaScript** applications.
-
----
-
-## 📌 Project Goals
-
-- ✅ Provide a consistent and scalable UI across corporate front-end apps
-- ✅ Guarantee **accessibility** (WCAG 2.1 compliant wherever possible)
-- ✅ Support **dark and light themes** using CSS custom properties
-- ✅ Deliver reusable components via **Web Components**
-- ✅ Make it framework-agnostic and easy to adopt
-
----
-
-## 🧱 Technologies Used
-
-| Layer        | Technology                  |
-|--------------|-----------------------------|
-| Components   | [Ionic](https://ionicframework.com/) + [Stencil](https://stenciljs.com/) |
-| Styling      | [Sass (SCSS)](https://sass-lang.com/) with CSS variables |
-| Documentation| [Storybook](https://storybook.js.org/) |
-| Distribution | [NPM](https://www.npmjs.com/) |
-| CI/CD        | GitHub Actions (optional)   |
-
----
-
-## 🧩 Component Inventory (Initial Release)
-
-The design system currently includes the following components:
-
-- `ds-button`
-- `ds-checkbox`
-- `ds-input`
-- `ds-card`
-- `ds-radio`
-- `ds-select`
-- `ds-label`
-
-Each component is customizable via props/attributes and follows accessibility best practices.
-
----
-
-## 🎨 Theming
-
-This design system supports **light** and **dark** themes using CSS variables. Consumers can switch modes by toggling a `data-theme` attribute on the root element:
-
-```html
-<body data-theme="light"> <!-- or "dark" -->
-  <ds-button>Click me</ds-button>
-</body>
-
-
-🤝 Contributing
-Coming soon – we will open contribution guidelines and branching rules after the initial release.
-
-
-
-👨‍💻 Maintainers
-This design system is maintained by the front-end architecture team. Please reach out via internal channels for support or questions.
+/* Import Ionic Core styles */
+@import "@ionic/core/css/core.css";
+@import "@ionic/core/css/normalize.css";
+@import "@ionic/core/css/structure.css";
+@import "@ionic/core/css/typography.css";
+@import "@ionic/core/css/padding.css";
+@import "@ionic/core/css/float-elements.css";
+@import "@ionic/core/css/text-alignment.css";
+@import "@ionic/core/css/text-transformation.css";
+@import "@ionic/core/css/flex-utils.css";
+@import "@ionic/core/css/display.css";
+@import "@ionic/core/css/ionic.bundle.css";

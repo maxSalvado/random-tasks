@@ -8,3 +8,11 @@
     "types": ["node"]
   }
 }
+
+
+
+<!-- .storybook/preview-head.html -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@ionic/core@8.0.0/css/ionic.bundle.css"
+/>

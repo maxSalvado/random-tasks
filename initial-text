@@ -1,60 +1,10 @@
-module.exports = {
-  framework: {
-    name: require.resolve('@storybook/web-components-webpack5'),
-    options: {},
-  },
-  stories: ['../src/components/**/*.stories.ts'],
-  addons: ['@storybook/addon-essentials'],
-};
-
-
-import '../src/index.ts'; // registers your Stencil components
-import '@ionic/core/css/core.css';
-import '@ionic/core/css/ionic.bundle.css';
-
-export const parameters = {
-  layout: 'centered',
-};
-
-
-npm install --save-dev @storybook/web-components-webpack5@8.6.14 \
-  @storybook/builder-webpack5@8.6.14 \
-  @storybook/addon-essentials@8.6.14 \
-  lit
-
-*****************************************************************************
-
-import { html } from 'lit';
-
-export default {
-  title: 'Components/Button',
-  tags: ['autodocs'],
-  argTypes: {
-    variant: {
-      control: 'select',
-      options: ['primary', 'secondary'],
-    },
-  },
-};
-
-export const Primary = () =>
-  html`<ds-button variant="primary">Primary Button</ds-button>`;
-
-export const Secondary = () =>
-  html`<ds-button variant="secondary">Secondary Button</ds-button>`;
-
-export const CustomContent = () =>
-  html`<ds-button>🚀 Custom Content</ds-button>`;
-
-
-
-
-
-
-npm install --save-dev \
-  @storybook/web-components-webpack5@8 \
-  @storybook/builder-webpack5@8 \
-  @storybook/addon-essentials@8 \
-  @storybook/addon-interactions@8 \
-  lit
-
+{
+  "extends": "./tsconfig.json",
+  "include": ["src", ".storybook/**/*.js", ".storybook/**/*.ts"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  }
+}

@@ -1,5 +1,17 @@
-npm install --save-dev \
-  @storybook/web-components-webpack5@7.6.15 \
-  @storybook/builder-webpack5@7.6.15 \
-  @storybook/manager-webpack5@7.6.15 \
-  @storybook/addon-essentials@7.6.15
+module.exports = {
+  framework: {
+    name: require.resolve('@storybook/web-components-webpack5'),
+    options: {},
+  },
+  stories: ['../src/components/**/*.stories.ts'],
+  addons: ['@storybook/addon-essentials'],
+};
+
+
+import '../src/index.ts'; // registers your Stencil components
+import '@ionic/core/css/core.css';
+import '@ionic/core/css/ionic.bundle.css';
+
+export const parameters = {
+  layout: 'centered',
+};

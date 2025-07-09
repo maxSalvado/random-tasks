@@ -1,40 +1,23 @@
-import { html } from 'lit';
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+  }
 
-export default {
-  title: '00 Welcome',
-  parameters: {
-    layout: 'centered',
-  },
-};
+  #storybook-root,
+  .docs-story {
+    min-height: 100vh;
+    overflow-y: auto !important;
+    display: flex;
+    flex-direction: column;
+  }
 
-export const GettingStarted = () => html`
-  <div style="font-family: sans-serif; max-width: 720px; line-height: 1.6;">
-    <h1>👋 Welcome to Our Design System</h1>
-    <p>
-      This Storybook documents reusable UI components designed for accessibility, consistency,
-      and theme support across our front-end applications.
-    </p>
-    <hr />
-    <h2>📦 Installation</h2>
-    <pre><code>npm install @yourorg/design-system</code></pre>
-
-    <h2>🚀 Usage</h2>
-    <pre><code>
-import { defineCustomElements } from '@yourorg/design-system/loader';
-defineCustomElements();
-    </code></pre>
-
-    <h2>🧱 Components</h2>
-    <ul>
-      <li>Button</li>
-      <li>Checkbox</li>
-      <li>Input</li>
-      <li>Card</li>
-      <li>Select</li>
-      <li>Radio</li>
-      <li>Label</li>
-    </ul>
-
-    <p>Use the sidebar to explore available components.</p>
-  </div>
-`;
+  .sbdocs.sbdocs-wrapper {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+</style>

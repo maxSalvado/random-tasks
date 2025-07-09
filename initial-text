@@ -1,18 +1,16 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["src", ".storybook/**/*.js", ".storybook/**/*.ts"],
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "types": ["node"]
-  }
-}
+import { Meta } from '@storybook/addon-docs';
 
+<Meta title="📘 Welcome" />
 
+# 👋 Welcome to Our Design System
 
-<!-- .storybook/preview-head.html -->
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@ionic/core@8.0.0/css/ionic.bundle.css"
-/>
+This Storybook contains the building blocks for creating consistent, accessible, and theme-ready user interfaces across all front-end projects.
+
+---
+
+## 📦 How to Use
+
+Install the design system in your project:
+
+```bash
+npm install @yourorg/design-system

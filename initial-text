@@ -1,16 +1,39 @@
-import { Meta } from '@storybook/addon-docs';
+const path = require('path');
 
-<Meta title="📘 Welcome" />
+module.exports = {
+  framework: {
+    name: '@storybook/web-components-webpack5',
+    options: {},
+  },
+  stories: [
+    '../src/components/**/*.stories.@(ts|mdx)',
+    '../src/docs/**/*.stories.@(ts|mdx)',
+  ],
+  addons: [
+    '@storybook/addon-essentials',
+    {
+      name: '@storybook/addon-docs',
+      options: {
+        transcludeMarkdown: true,
+      },
+    },
+  ],
+  webpackFinal: async (config) => {
+    config.module.rules.push({
+      test: /\.mdx$/,
+      use: [
+        {
+          loader: require.resolve('babel-loader'),
+          options: {
+            presets: [require.resolve('@babel/preset-env')],
+          },
+        },
+        {
+          loader: require.resolve('@mdx-js/loader'),
+        },
+      ],
+    });
 
-# 👋 Welcome to Our Design System
-
-This Storybook contains the building blocks for creating consistent, accessible, and theme-ready user interfaces across all front-end projects.
-
----
-
-## 📦 How to Use
-
-Install the design system in your project:
-
-```bash
-npm install @yourorg/design-system
+    return config;
+  },
+};

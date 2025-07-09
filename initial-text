@@ -45,3 +45,16 @@ export const Secondary = () =>
 
 export const CustomContent = () =>
   html`<ds-button>🚀 Custom Content</ds-button>`;
+
+
+
+
+
+
+npm install --save-dev \
+  @storybook/web-components-webpack5@8 \
+  @storybook/builder-webpack5@8 \
+  @storybook/addon-essentials@8 \
+  @storybook/addon-interactions@8 \
+  lit
+

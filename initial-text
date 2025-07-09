@@ -21,3 +21,27 @@ npm install --save-dev @storybook/web-components-webpack5@8.6.14 \
   @storybook/builder-webpack5@8.6.14 \
   @storybook/addon-essentials@8.6.14 \
   lit
+
+*****************************************************************************
+
+import { html } from 'lit';
+
+export default {
+  title: 'Components/Button',
+  tags: ['autodocs'],
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['primary', 'secondary'],
+    },
+  },
+};
+
+export const Primary = () =>
+  html`<ds-button variant="primary">Primary Button</ds-button>`;
+
+export const Secondary = () =>
+  html`<ds-button variant="secondary">Secondary Button</ds-button>`;
+
+export const CustomContent = () =>
+  html`<ds-button>🚀 Custom Content</ds-button>`;

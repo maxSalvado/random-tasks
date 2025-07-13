@@ -1,0 +1,84 @@
+[ÉPICO/História Principal]
+
+Título:
+Migrar Catálogo de Serviços de TI para Ambiente Moderno Azure/Angular com SSO Entra ID
+
+Como uma empresa de soluções de TI,
+Quero migrar nosso catálogo de serviços atual para um novo aplicativo web desenvolvido em Angular e Azure (Functions + Cosmos DB),
+Para modernizar nosso stack tecnológico, permitir autenticação segura via Entra ID e facilitar a gestão de conteúdo pela equipe.
+
+-------------------------------
+Critérios de Aceitação
+
+1. O conteúdo do catálogo é migrado do site atual (Vercel) para um novo aplicativo Angular hospedado na Azure.
+2. Autenticação SSO implementada via Entra ID; somente usuários da empresa conseguem acessar.
+3. Controle de acesso por perfil: apenas um grupo específico (gerenciado pelo Entra ID ou portal Azure) pode adicionar/editar/remover conteúdo do catálogo.
+4. CMS amigável: usuários autorizados podem gerenciar o conteúdo do catálogo pela interface do novo app.
+5. Relatórios de Ações/Leads: editores conseguem registrar ações de vitrine e novos leads em uma tabela simples.
+6. MVP estável, publicado na Azure e acessível a usuários via navegador.
+
+-------------------------------
+Quebra de Tarefas (com Estimativa)
+
+Tarefa | Descrição | Pontos de Esforço (PE)
+-------------------------------------------------
+Descoberta & Planejamento | Revisar o site atual, entender as funcionalidades, estrutura dos dados | 2
+Extração de Dados | Extrair conteúdo e estrutura do catálogo (web scraping ou manual) | 3
+Configuração Azure | Criar recursos Azure Functions, Cosmos DB, Entra ID (tenant teste) | 2
+Skeleton Angular | Gerar app Angular base, rotas e layout | 2
+Integração SSO Entra ID | Implementar autenticação Angular com Entra ID | 3
+Controle de Acesso (RBAC) | Configurar grupos/perfis no Entra ID/Azure para proteger recursos de edição | 2
+Modelagem de Dados | Definir schema de dados no Cosmos DB | 1
+APIs Backend | Criar endpoints CRUD para catálogo e relatório de ações/leads | 3
+Frontend: Visualização Catálogo | Listagem e detalhes do catálogo no Angular | 2
+Frontend: UI de Editor | Telas para adicionar/editar/remover conteúdo (somente editores) | 2
+Frontend: Tabela de Relatórios | Tabela/formulário para registrar ações/leads | 1
+Migração dos Dados | Importar dados extraídos para o Cosmos DB via backend | 1
+Testes & Correções | Testar todos os fluxos, corrigir bugs | 2
+Deploy & Handover | Publicar app na Azure, documentar deploy/configuração | 2
+Demo & Feedback | Apresentação do MVP e coleta de feedback | 1
+
+Total Estimado: ~29 Pontos de Esforço (PE)
+
+-------------------------------
+Exemplo de Slicing para Sprints
+
+Sprint 1: Descoberta, Dados, Base
+- Descoberta & Planejamento
+- Extração de Dados
+- Configuração Azure
+- Skeleton Angular
+- Modelagem de Dados
+
+Sprint 2: Autenticação, Backend, Frontend Inicial
+- Integração SSO Entra ID
+- Controle de Acesso (RBAC)
+- APIs Backend
+- Frontend: Visualização Catálogo
+- Migração dos Dados
+
+Sprint 3: Edição, Relatórios, Deploy
+- Frontend: UI de Editor
+- Frontend: Tabela de Relatórios
+- Testes & Correções
+- Deploy & Handover
+- Demo & Feedback
+
+-------------------------------
+Histórias de Usuário para o Backlog
+
+1. Como administrador de TI, quero migrar todo o conteúdo do catálogo para uma nova plataforma, para termos um ambiente moderno e de fácil gestão.
+2. Como usuário da empresa, quero acessar via SSO (Entra ID), para garantir segurança e praticidade.
+3. Como editor, quero adicionar/editar/remover conteúdos no novo app, para manter as informações atualizadas.
+4. Como editor, quero registrar ações de vitrine e leads, para acompanhar o engajamento.
+5. Como stakeholder, quero o MVP publicado e documentado, para começarmos a usar a nova solução.
+
+-------------------------------
+Recomendações Extras
+
+- Utilize Azure Static Web Apps para publicar o frontend Angular e Azure Functions juntos.
+- Documente a gestão de grupos no Entra ID/Azure para não precisar criar UI de administração de perfis no MVP.
+- Considere analytics, acessibilidade, etc. apenas após o MVP.
+
+-------------------------------
+

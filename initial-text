@@ -1,23 +1,104 @@
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: sans-serif;
-    overflow-y: auto !important;
-    height: auto !important;
-    min-height: 100vh;
-  }
+h1. 📘 Documentação do Fluxo Power Automate: Gerenciamento de Incidentes
 
-  #storybook-root,
-  .docs-story {
-    min-height: 100vh;
-    overflow-y: auto !important;
-    display: flex;
-    flex-direction: column;
-  }
+h2. Visão Geral
 
-  .sbdocs.sbdocs-wrapper {
-    overflow: visible !important;
-    max-height: none !important;
-  }
-</style>
+Este documento descreve a estrutura, lógica e objetivos do fluxo automatizado criado no *Microsoft Power Automate*, cuja missão é conectar diferentes serviços do Microsoft 365 para orquestrar ações a partir de requisições feitas por um aplicativo desenvolvido no *Microsoft Power Apps*.
+
+O propósito principal do fluxo é receber informações de incidentes inicialmente registrados na plataforma *ServiceNow*, processar e armazenar essas informações no *SharePoint*, identificar stakeholders e equipes de segurança, e enviar notificações automáticas por meio do *Microsoft Teams*.
+
+h2. 🔁 Gatilho de Início
+
+* O fluxo é iniciado por uma requisição recebida a partir de um aplicativo no *Microsoft Power Apps*, que envia uma série de variáveis listadas abaixo:
+  - itemID [number]
+  - function [string]
+  - ticketNumber [string]
+  - clientName [string]
+  - shortDescription [string]
+  - longDescription [string]
+  - update [string]
+  - clientID [string]
+  - stakeholders [string]
+  - notificationGroup [string]
+  - teams [boolean]
+  - push [boolean]
+  - criticality [string]
+  - techlead [string]
+  - iscrisis [boolean]
+
+h2. 📥 Etapas de Coleta e Enriquecimento de Dados
+
+# Consulta em uma lista do *SharePoint* para recuperar os _"Recipientes de Segurança da Informação"_.
+# Para cada pessoa recuperada, é feita uma chamada ao conector do *Office 365* para obtenção do perfil completo. Os dados são armazenados em um array chamada *Recipientes*.
+# A variável *stakeholders*, enviada pela aplicação, é percorrida e seus itens também são adicionados a array *Recipientes*.
+# Uma chamada a um *fluxo filho* chamado "Child-GetStakeholders" é realizada. Este fluxo consulta a API da aplicação *Apollo* para obter stakeholders adicionais, que também passam por enriquecimento via *Office 365* antes de serem adicionados a array *Recipientes*.
+
+h2. 🔀 Tomada de Decisão (Switch Function)
+
+O fluxo utiliza uma estrutura *switch* para tratar diferentes operações baseadas no valor da variável *@function*@ enviada pelo Power Apps:
+
+h3. *function = "Open"*
+* Um novo item é criado na lista *Incident History* no SharePoint.
+* Caso a variável *@push@* seja verdadeira, uma notificação *push* é enviada ao aplicativo Power Apps.
+* A seguir, realiza-se a [Validação de Canais].
+
+h3. *function = "Update"*
+* Um item existente (localizado via *@ItemId@*) na lista *Incident History* é atualizado com os novos dados.
+* O status é alterado para _In Progress_.
+* Notificações *push* e a [Validação de Canais] são realizadas conforme aplicável.
+
+h3. *function = "Close"*
+* O item correspondente é atualizado com status _Resolved_.
+* Notificações *push* e [Validação de Canais].
+
+h3. *function = "Reopen"*
+* O item é atualizado com status _In Progress_.
+* Notificações *push* e [Validação de Canais].
+
+h3. *function = "Monitoring"*
+* O item é atualizado com status _Monitoring_ após o envio da notificação *push*.
+* A [Validação de Canais] também é realizada.
+
+h3. *function = "Test"*
+* Este caso é utilizado apenas em ambientes de desenvolvimento/testes.
+* Uma mensagem é enviada ao canal *Incident Communication Test Team* no Teams.
+* Um item é criado na lista *Incident History QA* com os dados enviados.
+
+h2. 📣 Validação de Canais (NotificationGroup)
+
+A variável *@NotificationGroup@* define o canal do *Microsoft Teams* que deve receber uma notificação sobre o incidente:
+
+|| NotificationGroup || Time do Teams || Canal ||
+| Segurança da Informação | [NTT] Incidentes de Segurança da Informação | Notificações Incidentes Segurança da Informação |
+| LATAM Service BR | [NTT] MS + CMD | Notificações P1 Services |
+| SOC LATAM | [NTT] SOC LATAM | Notificações P1 SOC |
+| SOC Americas | AM.US-Queue Management | Brazil SOC Major Incident Chat (MIM) |
+| Cloud | [NTT] CLOUD | Notificações P1 CLOUD |
+| Chile | [NTT] Notificações P1 – Chile | Notificações P1 P2 CHILE |
+
+h2. ☎️ Notificações em Caso de Crise
+
+Se a variável *@iscrisis@* for verdadeira e a função for *Open* ou *Test*:
+
+* A lista *@varEmailListToCrisis@* é populada com os e-mails dos stakeholders e do engenheiro responsável pelo incidente.
+* Cada e-mail é transformado em um ID de usuário via conector do *Office 365*.
+* Um chat no *Microsoft Teams* é criado com todos os IDs da lista *varUsersIdsToCrisisChat*.
+* Uma mensagem estilizada é enviada com os seguintes campos:
+  - Cliente
+  - Ticket number
+  - Gravidade
+  - Descrição
+  - Engenheiro responsável
+  - Status
+
+h2. 🧪 Tratamento de Erros
+
+Todo o processo descrito é encapsulado em um bloco *try*. Se qualquer erro ocorrer:
+
+* Um bloco *catch* envia uma notificação para o time *InternalApps Errors* no canal *General* do *Microsoft Teams*.
+* Dessa forma, o time responsável pode intervir manualmente para investigar e corrigir a falha.
+
+h2. ✅ Conclusão
+
+Esse fluxo é um exemplo robusto de como integrar múltiplas plataformas do ecossistema Microsoft 365 com propósito claro, lógica bem definida e automação inteligente. Ele garante que os incidentes sejam corretamente tratados, registrados e comunicados, promovendo agilidade e organização no processo de resposta a eventos críticos.
+
+Se você chegou até aqui: parabéns! Agora você também entende como esse fluxo funciona – e, quem sabe, ele até ficou mais simpático depois dessa leitura 😉

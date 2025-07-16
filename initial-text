@@ -1,104 +1,125 @@
-h1. 📘 Documentação do Fluxo Power Automate: Gerenciamento de Incidentes
+Modernize the IT Service Catalog by migrating to a new Angular + Azure web app with Entra ID SSO and secure content management.
 
-h2. Visão Geral
 
-Este documento descreve a estrutura, lógica e objetivos do fluxo automatizado criado no *Microsoft Power Automate*, cuja missão é conectar diferentes serviços do Microsoft 365 para orquestrar ações a partir de requisições feitas por um aplicativo desenvolvido no *Microsoft Power Apps*.
+# 🚀 IT Service Catalog Migration to Modern Azure Stack
 
-O propósito principal do fluxo é receber informações de incidentes inicialmente registrados na plataforma *ServiceNow*, processar e armazenar essas informações no *SharePoint*, identificar stakeholders e equipes de segurança, e enviar notificações automáticas por meio do *Microsoft Teams*.
+This repository contains the source code and project documentation for migrating the current IT Service Catalog to a modern, secure web application built with **Angular** and **Azure** (Functions + Cosmos DB). The goal is to enhance maintainability, implement SSO via **Microsoft Entra ID**, and provide a user-friendly CMS for internal teams.
 
-h2. 🔁 Gatilho de Início
+---
 
-* O fluxo é iniciado por uma requisição recebida a partir de um aplicativo no *Microsoft Power Apps*, que envia uma série de variáveis listadas abaixo:
-  - itemID [number]
-  - function [string]
-  - ticketNumber [string]
-  - clientName [string]
-  - shortDescription [string]
-  - longDescription [string]
-  - update [string]
-  - clientID [string]
-  - stakeholders [string]
-  - notificationGroup [string]
-  - teams [boolean]
-  - push [boolean]
-  - criticality [string]
-  - techlead [string]
-  - iscrisis [boolean]
+## 📌 Project Overview
 
-h2. 📥 Etapas de Coleta e Enriquecimento de Dados
+**Project Title**: Migrate IT Service Catalog to Modern Azure/Angular Stack with Entra ID SSO
 
-# Consulta em uma lista do *SharePoint* para recuperar os _"Recipientes de Segurança da Informação"_.
-# Para cada pessoa recuperada, é feita uma chamada ao conector do *Office 365* para obtenção do perfil completo. Os dados são armazenados em um array chamada *Recipientes*.
-# A variável *stakeholders*, enviada pela aplicação, é percorrida e seus itens também são adicionados a array *Recipientes*.
-# Uma chamada a um *fluxo filho* chamado "Child-GetStakeholders" é realizada. Este fluxo consulta a API da aplicação *Apollo* para obter stakeholders adicionais, que também passam por enriquecimento via *Office 365* antes de serem adicionados a array *Recipientes*.
+As an IT solutions company, we aim to migrate our existing service catalog (currently hosted on Vercel) to a new web application using Angular and Azure technologies. The new platform will:
+- Provide secure access via Entra ID Single Sign-On (SSO)
+- Enable content management through a role-based system
+- Support internal reporting on leads and showcase actions
+- Be published as a stable MVP on Azure
 
-h2. 🔀 Tomada de Decisão (Switch Function)
+---
 
-O fluxo utiliza uma estrutura *switch* para tratar diferentes operações baseadas no valor da variável *@function*@ enviada pelo Power Apps:
+## ✅ Acceptance Criteria
 
-h3. *function = "Open"*
-* Um novo item é criado na lista *Incident History* no SharePoint.
-* Caso a variável *@push@* seja verdadeira, uma notificação *push* é enviada ao aplicativo Power Apps.
-* A seguir, realiza-se a [Validação de Canais].
+- ✅ Catalog content is migrated from the existing site to the new Angular app hosted on Azure
+- ✅ SSO authentication via Microsoft Entra ID, allowing access only to internal users
+- ✅ Role-based access: Only authorized groups can add/edit/delete catalog content
+- ✅ CMS-friendly UI for editors to manage catalog items
+- ✅ Reporting table for editors to log leads and showcase actions
+- ✅ MVP is deployed, stable, and accessible via browser
 
-h3. *function = "Update"*
-* Um item existente (localizado via *@ItemId@*) na lista *Incident History* é atualizado com os novos dados.
-* O status é alterado para _In Progress_.
-* Notificações *push* e a [Validação de Canais] são realizadas conforme aplicável.
+---
 
-h3. *function = "Close"*
-* O item correspondente é atualizado com status _Resolved_.
-* Notificações *push* e [Validação de Canais].
+## 🧩 Project Tasks & Estimations
 
-h3. *function = "Reopen"*
-* O item é atualizado com status _In Progress_.
-* Notificações *push* e [Validação de Canais].
+| Task                             | Description                                                                 | Effort Points |
+|----------------------------------|-----------------------------------------------------------------------------|---------------|
+| Discovery & Planning             | Review current site, data structure, and functionality                      | 2             |
+| Data Extraction                  | Extract catalog data (scraping/manual)                                      | 3             |
+| Azure Configuration              | Set up Azure Functions, Cosmos DB, Entra ID (test tenant)                  | 2             |
+| Angular Skeleton                 | Generate Angular app base, routes, layout                                   | 2             |
+| Entra ID SSO Integration         | Implement secure SSO authentication via Entra ID                           | 3             |
+| Role-Based Access Control (RBAC)| Configure group-based access using Entra ID/Azure                          | 2             |
+| Data Modeling                    | Define data schema for Cosmos DB                                            | 1             |
+| Backend API                      | Create CRUD endpoints for catalog and reports                               | 3             |
+| Frontend - Catalog Viewer        | Display list/details of services                                            | 2             |
+| Frontend - Editor UI             | Add/edit/delete content (restricted to editors)                             | 2             |
+| Frontend - Reporting Table       | Form/table for leads and showcase action logging                            | 1             |
+| Data Migration                   | Import data into Cosmos DB via backend                                      | 1             |
+| Testing & Fixes                  | Validate flows, fix bugs                                                    | 2             |
+| Deployment & Handover           | Publish app on Azure, document deployment steps                             | 2             |
+| MVP Demo & Feedback              | Present MVP to stakeholders, gather feedback                                | 1             |
 
-h3. *function = "Monitoring"*
-* O item é atualizado com status _Monitoring_ após o envio da notificação *push*.
-* A [Validação de Canais] também é realizada.
+**Total Estimate**: ~29 Effort Points
 
-h3. *function = "Test"*
-* Este caso é utilizado apenas em ambientes de desenvolvimento/testes.
-* Uma mensagem é enviada ao canal *Incident Communication Test Team* no Teams.
-* Um item é criado na lista *Incident History QA* com os dados enviados.
+---
 
-h2. 📣 Validação de Canais (NotificationGroup)
+## 🔄 Sprint Planning Example
 
-A variável *@NotificationGroup@* define o canal do *Microsoft Teams* que deve receber uma notificação sobre o incidente:
+### Sprint 1 – Discovery & Foundations
+- Discovery & Planning
+- Data Extraction
+- Azure Configuration
+- Angular Skeleton
+- Data Modeling
 
-|| NotificationGroup || Time do Teams || Canal ||
-| Segurança da Informação | [NTT] Incidentes de Segurança da Informação | Notificações Incidentes Segurança da Informação |
-| LATAM Service BR | [NTT] MS + CMD | Notificações P1 Services |
-| SOC LATAM | [NTT] SOC LATAM | Notificações P1 SOC |
-| SOC Americas | AM.US-Queue Management | Brazil SOC Major Incident Chat (MIM) |
-| Cloud | [NTT] CLOUD | Notificações P1 CLOUD |
-| Chile | [NTT] Notificações P1 – Chile | Notificações P1 P2 CHILE |
+### Sprint 2 – Auth & Core Features
+- Entra ID SSO Integration
+- RBAC Setup
+- Backend API
+- Frontend - Catalog Viewer
+- Data Migration
 
-h2. ☎️ Notificações em Caso de Crise
+### Sprint 3 – Editing & Publishing
+- Frontend - Editor UI
+- Frontend - Reporting Table
+- Testing & Fixes
+- Deployment & Handover
+- MVP Demo & Feedback
 
-Se a variável *@iscrisis@* for verdadeira e a função for *Open* ou *Test*:
+---
 
-* A lista *@varEmailListToCrisis@* é populada com os e-mails dos stakeholders e do engenheiro responsável pelo incidente.
-* Cada e-mail é transformado em um ID de usuário via conector do *Office 365*.
-* Um chat no *Microsoft Teams* é criado com todos os IDs da lista *varUsersIdsToCrisisChat*.
-* Uma mensagem estilizada é enviada com os seguintes campos:
-  - Cliente
-  - Ticket number
-  - Gravidade
-  - Descrição
-  - Engenheiro responsável
-  - Status
+## 👤 User Stories
 
-h2. 🧪 Tratamento de Erros
+1. As an **IT admin**, I want to migrate the catalog to a modern platform for better usability and control.
+2. As an **employee**, I want to log in securely using Entra ID SSO for a seamless experience.
+3. As a **catalog editor**, I want to manage content through the new app to keep information up to date.
+4. As a **sales/marketing editor**, I want to log leads and showcase actions for engagement tracking.
+5. As a **stakeholder**, I want to access and use a functional MVP with documentation and a deployed instance.
 
-Todo o processo descrito é encapsulado em um bloco *try*. Se qualquer erro ocorrer:
+---
 
-* Um bloco *catch* envia uma notificação para o time *InternalApps Errors* no canal *General* do *Microsoft Teams*.
-* Dessa forma, o time responsável pode intervir manualmente para investigar e corrigir a falha.
+## 🛠️ Tech Stack
 
-h2. ✅ Conclusão
+- **Frontend**: Angular (deployed via Azure Static Web Apps)
+- **Backend**: Azure Functions (Node.js/TypeScript)
+- **Database**: Azure Cosmos DB (NoSQL)
+- **Authentication**: Microsoft Entra ID (SSO)
+- **Access Control**: RBAC via Entra ID or Azure Portal
+- **Deployment**: Azure Cloud (Static Web Apps + Functions)
 
-Esse fluxo é um exemplo robusto de como integrar múltiplas plataformas do ecossistema Microsoft 365 com propósito claro, lógica bem definida e automação inteligente. Ele garante que os incidentes sejam corretamente tratados, registrados e comunicados, promovendo agilidade e organização no processo de resposta a eventos críticos.
+---
 
-Se você chegou até aqui: parabéns! Agora você também entende como esse fluxo funciona – e, quem sabe, ele até ficou mais simpático depois dessa leitura 😉
+## 💡 Recommendations
+
+- Use **Azure Static Web Apps** for deploying the Angular frontend with Azure Functions.
+- Manage user groups and roles directly in **Entra ID/Azure**, avoiding admin UI in the MVP.
+- Consider adding analytics, accessibility improvements, and audit logging **after MVP** release.
+
+---
+
+## 📦 Getting Started (to be added in detail)
+
+Coming soon: detailed setup and deployment instructions for development, testing, and production environments.
+
+---
+
+## 📣 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🤝 Contributing
+
+Contributions and feedback are welcome! Please open issues or submit pull requests as needed.

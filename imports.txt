@@ -11,3 +11,17 @@
   "node_modules/@ionic/angular/css/flex-utils.css",
   "node_modules/@ionic/angular/css/display.css"
 ]
+
+
+<ion-app>
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Ionic in Angular CLI</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content class="ion-padding">
+    <ion-button expand="block" color="primary">Click Me</ion-button>
+  </ion-content>
+</ion-app>
+

@@ -1,63 +1,35 @@
-ng generate component pages/login --standalone
-ng generate component pages/home --standalone
-ng generate component pages/automation --standalone
-ng generate component pages/automation/automation-detail --standalone
-ng generate component pages/tecnologias-avancadas --standalone
-ng generate component pages/tecnologias-avancadas/tech-detail --standalone
-ng generate component pages/oportunidades --standalone
-ng generate component pages/oportunidades/criar --standalone
-ng generate component pages/oportunidades/visualizar --standalone
-ng generate component pages/oportunidades/editar --standalone
-ng generate component pages/pocs --standalone
-ng generate component pages/pocs/criar --standalone
-ng generate component pages/pocs/visualizar --standalone
-ng generate component pages/pocs/editar --standalone
+import { Component, computed, inject } from '@angular/core';
+import { IonicModule } from '@ionic/angular';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 
+@Component({
+  selector: 'app-visualizar-oportunidade',
+  standalone: true,
+  imports: [IonicModule, CommonModule],
+  template: `
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Visualizar Oportunidade</ion-title>
+      </ion-toolbar>
+    </ion-header>
 
----
+    <ion-content class="ion-padding">
+      <p>ID da oportunidade: {{ id() }}</p>
+    </ion-content>
+  `,
+})
+export class VisualizarOportunidadeComponent {
+  private route = inject(ActivatedRoute);
+  private idSignal = toSignal(this.route.paramMap.pipe(
+    // paramMap is Observable<ParamMap>
+    // `get('id')` extracts the value from URL
+    map((params: ParamMap) => params.get('id') ?? '')
+  ));
 
-import { Routes } from '@angular/router';
-
-// Lazy loading (recommended for standalone)
-export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
-  { path: 'home', loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent) },
-  {
-    path: 'automation',
-    children: [
-      { path: '', loadComponent: () => import('./pages/automation/automation.component').then(m => m.AutomationComponent) },
-      { path: ':name', loadComponent: () => import('./pages/automation/automation-detail.component').then(m => m.AutomationDetailComponent) },
-    ],
-  },
-  { path: 'experiencia-em-clientes', loadComponent: () => import('./pages/experiencia-em-clientes/experiencia.component').then(m => m.ExperienciaComponent) },
-  {
-    path: 'tecnologias-avancadas',
-    children: [
-      { path: '', loadComponent: () => import('./pages/tecnologias-avancadas/tech.component').then(m => m.TechComponent) },
-      { path: ':name', loadComponent: () => import('./pages/tecnologias-avancadas/tech-detail.component').then(m => m.TechDetailComponent) },
-    ],
-  },
-  {
-    path: 'oportunidades',
-    children: [
-      { path: '', loadComponent: () => import('./pages/oportunidades/oportunidades.component').then(m => m.OportunidadesComponent) },
-      { path: 'criar', loadComponent: () => import('./pages/oportunidades/criar.component').then(m => m.CriarOportunidadeComponent) },
-      { path: 'visualizar/:id', loadComponent: () => import('./pages/oportunidades/visualizar.component').then(m => m.VisualizarOportunidadeComponent) },
-      { path: 'editar/:id', loadComponent: () => import('./pages/oportunidades/editar.component').then(m => m.EditarOportunidadeComponent) },
-    ],
-  },
-  {
-    path: 'pocs',
-    children: [
-      { path: '', loadComponent: () => import('./pages/pocs/pocs.component').then(m => m.PocsComponent) },
-      { path: 'criar', loadComponent: () => import('./pages/pocs/criar.component').then(m => m.CriarPocComponent) },
-      { path: 'visualizar/:id', loadComponent: () => import('./pages/pocs/visualizar.component').then(m => m.VisualizarPocComponent) },
-      { path: 'editar/:id', loadComponent: () => import('./pages/pocs/editar.component').then(m => m.EditarPocComponent) },
-    ],
-  },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: '**', redirectTo: 'login' },
-];
+  id = computed(() => this.idSignal());
+}
 
 
 

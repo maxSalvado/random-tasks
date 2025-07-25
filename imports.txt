@@ -1,14 +1,31 @@
-.my-icon {
-  background-color: #ffffff; // ← this becomes the icon color
-  -webkit-mask-image: url('/assets/icons/my-icon.svg');
-  mask-image: url('/assets/icons/my-icon.svg');
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  width: 100px;
-  height: 100px;
-}
+import {
+  trigger,
+  transition,
+  style,
+  animate,
+  query,
+  group,
+} from '@angular/animations';
+
+export const routeTransitionAnimations = trigger('routeAnimations', [
+  transition('* <=> *', [
+    query(':enter, :leave', [
+      style({
+        position: 'absolute',
+        width: '100%',
+        opacity: 0,
+      }),
+    ], { optional: true }),
+    group([
+      query(':enter', [
+        animate('400ms ease', style({ opacity: 1 })),
+      ], { optional: true }),
+      query(':leave', [
+        animate('400ms ease', style({ opacity: 0 })),
+      ], { optional: true }),
+    ]),
+  ]),
+]);
 
 
 

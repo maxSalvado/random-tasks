@@ -1,7 +1,21 @@
-getRouteAnimationData(outlet: RouterOutlet) {
-  return outlet && outlet.activatedRouteData && outlet.activatedRouteData['animation'];
-}
+import { AfterViewInit, ViewChild } from '@angular/core';
+import { IonContent } from '@ionic/angular';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
+export class HomeComponent implements AfterViewInit {
+  @ViewChild(IonContent) ionContent!: IonContent;
+
+  constructor(private router: Router) {}
+
+  ngAfterViewInit(): void {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.ionContent.scrollToTop(300); // smooth scroll
+    });
+  }
+}
 
 
 

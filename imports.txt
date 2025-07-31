@@ -1,47 +1,132 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { IonicModule } from '@ionic/angular';
 
-class CORSRequestHandler(SimpleHTTPRequestHandler):
-    def end_headers(self):
-        # ✅ Add CORS headers
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', '*')
-        super().end_headers()
+@Component({
+  selector: 'app-customer-form',
+  standalone: true,
+  imports: [IonicModule, ReactiveFormsModule],
+  templateUrl: './customer-form.component.html',
+})
+export class CustomerFormComponent implements OnInit {
+  form!: FormGroup;
 
-if __name__ == '__main__':
-    port = 5050
-    print(f"Serving with CORS at http://localhost:{port}")
-    httpd = HTTPServer(('localhost', port), CORSRequestHandler)
-    httpd.serve_forever()
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit() {
+    this.form = this.fb.group({
+      companyName: ['', Validators.required],
+      contactEmail: ['', [Validators.required, Validators.email]],
+      accountManager: ['', Validators.required],
+      customerNeeds: ['', Validators.required],
+      additionalDetails: [''],
+      leadOrigins: [''],
+      currentStatus: [''],
+    });
+  }
+
+  onSubmit() {
+    if (this.form.valid) {
+      console.log('✅ Form submitted:', this.form.value);
+    } else {
+      console.warn('⚠️ Form is invalid');
+      this.form.markAllAsTouched();
+    }
+  }
+}
 
 
-**********************************************
 
 
-"styles": [
-  "src/styles.css",
-  "node_modules/@ionic/angular/css/core.css",
-  "node_modules/@ionic/angular/css/normalize.css",
-  "node_modules/@ionic/angular/css/structure.css",
-  "node_modules/@ionic/angular/css/typography.css",
-  "node_modules/@ionic/angular/css/padding.css",
-  "node_modules/@ionic/angular/css/float-elements.css",
-  "node_modules/@ionic/angular/css/text-alignment.css",
-  "node_modules/@ionic/angular/css/text-transformation.css",
-  "node_modules/@ionic/angular/css/flex-utils.css",
-  "node_modules/@ionic/angular/css/display.css"
-]
+
+---------------------------------------------------
 
 
-<ion-app>
-  <ion-header>
-    <ion-toolbar>
-      <ion-title>Ionic in Angular CLI</ion-title>
-    </ion-toolbar>
-  </ion-header>
 
-  <ion-content class="ion-padding">
-    <ion-button expand="block" color="primary">Click Me</ion-button>
-  </ion-content>
-</ion-app>
 
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Customer Form</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <ion-list lines="full">
+      <!-- Company Name -->
+      <ion-item>
+        <ion-label position="floating">Company Name *</ion-label>
+        <ion-input formControlName="companyName" required></ion-input>
+      </ion-item>
+
+      <!-- Contact Email -->
+      <ion-item>
+        <ion-label position="floating">Contact Email *</ion-label>
+        <ion-input type="email" formControlName="contactEmail" required></ion-input>
+      </ion-item>
+
+      <!-- Account Manager -->
+      <ion-item>
+        <ion-label position="floating">Account Manager Name *</ion-label>
+        <ion-input formControlName="accountManager" required></ion-input>
+      </ion-item>
+
+      <!-- Customer Needs -->
+      <ion-item>
+        <ion-label position="floating">Customer Needs *</ion-label>
+        <ion-textarea formControlName="customerNeeds" required></ion-textarea>
+      </ion-item>
+
+      <!-- Additional Details -->
+      <ion-item>
+        <ion-label position="floating">Additional Details</ion-label>
+        <ion-textarea formControlName="additionalDetails"></ion-textarea>
+      </ion-item>
+
+      <!-- Lead Origins -->
+      <ion-item>
+        <ion-label position="floating">Lead Origins</ion-label>
+        <ion-input formControlName="leadOrigins"></ion-input>
+      </ion-item>
+
+      <!-- Current Status -->
+      <ion-item>
+        <ion-label>Current Status</ion-label>
+        <ion-select formControlName="currentStatus" placeholder="Select status">
+          <ion-select-option value="new">New</ion-select-option>
+          <ion-select-option value="contacted">Contacted</ion-select-option>
+          <ion-select-option value="qualified">Qualified</ion-select-option>
+          <ion-select-option value="closed">Closed</ion-select-option>
+        </ion-select>
+      </ion-item>
+    </ion-list>
+
+    <!-- Submit Button -->
+    <ion-button expand="block" type="submit" [disabled]="form.invalid">
+      Submit
+    </ion-button>
+  </form>
+</ion-content>
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------
+
+
+
+
+
+
+UNDER INPUT:
+
+<ion-note color="danger" *ngIf="form.get('companyName')?.touched && form.get('companyName')?.invalid">
+  Company Name is required.
+</ion-note>

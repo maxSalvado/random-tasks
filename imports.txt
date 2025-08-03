@@ -1,6 +1,72 @@
-selectOptions = {
-  header: 'Select a Status',
-  subHeader: 'Filter status',
-  message: 'Choose one',
-  inputPlaceholder: 'Search status...',
-};
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  selector: 'app-searchable-select',
+  standalone: true,
+  imports: [IonicModule, CommonModule, FormsModule],
+  templateUrl: './searchable-select.component.html',
+})
+export class SearchableSelectComponent {
+  @Input() options: string[] = [];
+  @Input() title: string = 'Select an Option';
+  @Output() selected = new EventEmitter<string>();
+
+  filteredOptions: string[] = [];
+
+  constructor(private modalCtrl: ModalController) {}
+
+  ngOnInit() {
+    this.filteredOptions = [...this.options];
+  }
+
+  filterOptions(event: any) {
+    const query = event.detail.value.toLowerCase();
+    this.filteredOptions = this.options.filter(option =>
+      option.toLowerCase().includes(query)
+    );
+  }
+
+  select(option: string) {
+    this.selected.emit(option);
+    this.modalCtrl.dismiss(option);
+  }
+
+  cancel() {
+    this.modalCtrl.dismiss();
+  }
+}
+
+
+
+
+---------
+
+
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">Cancel</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-searchbar
+    placeholder="Search..."
+    (ionInput)="filterOptions($event)"
+  ></ion-searchbar>
+
+  <ion-list>
+    <ion-item
+      *ngFor="let option of filteredOptions"
+      button
+      (click)="select(option)"
+    >
+      {{ option }}
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -1,40 +1,11 @@
-import { Component } from '@angular/core';
-import { ModalController, IonicModule } from '@ionic/angular';
-import { SearchableSelectComponent } from '../components/searchable-select/searchable-select.component';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-
-@Component({
-  selector: 'app-my-form',
-  standalone: true,
-  imports: [IonicModule, CommonModule, ReactiveFormsModule],
-  templateUrl: './my-form.component.html',
-})
-export class MyFormComponent {
-  form: FormGroup;
-  statusOptions = ['New', 'Contacted', 'Qualified', 'Closed'];
-
-  constructor(private modalCtrl: ModalController, private fb: FormBuilder) {
-    this.form = this.fb.group({
-      currentStatus: [''],
-    });
-  }
-
-  async openStatusModal() {
-    const modal = await this.modalCtrl.create({
-      component: SearchableSelectComponent,
-      componentProps: {
-        options: this.statusOptions,
-        title: 'Select Status',
-      },
-    });
-
-    modal.onDidDismiss().then((result) => {
-      if (result.data) {
-        this.form.get('currentStatus')?.setValue(result.data);
-      }
-    });
-
-    await modal.present();
-  }
-}
+| Método | Rota                      | Recurso   | Descrição                                          |
+| ------ | ------------------------- | --------- | -------------------------------------------------- |
+| `GET`  | `/api/opportunities`      | List      | Retorna todos os registros de oportunidades        |
+| `GET`  | `/api/opportunities/{id}` | Get by ID | Retorna os detalhes de uma oportunidade específica |
+| `POST` | `/api/opportunities`      | Create    | Cria uma nova oportunidade                         |
+| `PUT`  | `/api/opportunities/{id}` | Update    | Atualiza uma oportunidade existente                |
+|        |                           |           |                                                    |
+| `GET`  | `/api/pocs`               | List      | Retorna todos os registros de POCs                 |
+| `GET`  | `/api/pocs/{id}`          | Get by ID | Retorna os detalhes de uma POC específica          |
+| `POST` | `/api/pocs`               | Create    | Cria uma nova POC                                  |
+| `PUT`  | `/api/pocs/{id}`          | Update    | Atualiza uma POC existente                         |

@@ -1,65 +1,77 @@
-Feature #1 – Infraestrutura e autenticação
+Product Backlog Item – User Story
+Título:
+Gerenciar POCs e Oportunidades com autenticação e controle de permissões via Entra ID
+
 Descrição:
-Implementar a infraestrutura necessária no Azure para suportar o novo Catálogo de Serviços de TI, garantindo autenticação segura via Entra ID (SSO) e configuração de permissões de acesso (RBAC) para diferentes perfis. Essa Feature estabelece a base tecnológica, segurança e governança de acesso do sistema.
 
-Tópicos principais:
+Eu, como editor autorizado do catálogo de serviços, quero acessar o sistema usando minha conta corporativa via SSO (Entra ID) e ter permissão para criar, editar e visualizar registros de POCs e Oportunidades, para que eu possa manter as informações atualizadas e consistentes, garantindo que apenas usuários autorizados possam modificar o conteúdo.
 
-Criar e configurar recursos no Azure:
+Critérios de Aceitação:
 
-Azure Functions
+Autenticação
 
-Cosmos DB
+O sistema deve permitir login apenas para usuários autenticados via SSO (Entra ID).
 
-Azure Static Web Apps
+Usuários não autenticados devem ser redirecionados para a tela de login.
 
-Configurar tenant e aplicativo no Entra ID para autenticação SSO no frontend Angular.
+Controle de Acesso (RBAC)
 
-Implementar controle de acesso baseado em papéis (RBAC) via grupos do Entra ID.
+Somente membros do grupo de editores configurado no Entra ID podem criar ou editar POCs e Oportunidades.
 
-Garantir que apenas usuários autenticados da empresa tenham acesso ao sistema.
+Usuários sem permissão de edição podem apenas visualizar as informações.
 
-Documentar no repositório as configurações de infraestrutura e segurança.
+Funcionalidade
 
-Feature #2 – Gerenciar conteúdo (POCs e Oportunidades)
-Descrição:
-Disponibilizar funcionalidades no sistema para criar, editar, atualizar e visualizar registros de POCs e Oportunidades. Incluir endpoints na API (Azure Functions) e telas/formulários no frontend Angular para gestão de conteúdo por editores autorizados.
+Listar todos os registros de POCs e Oportunidades disponíveis no banco de dados.
 
-Tópicos principais:
+Buscar um registro específico por ID.
 
-Criar endpoints na API para:
+Criar um novo registro, informando todos os campos obrigatórios.
 
-Listar todos os registros
+Editar registros existentes, atualizando apenas os campos necessários.
 
-Buscar por ID
+Exibir mensagens de sucesso ou erro para cada ação (criação, edição, busca).
 
-Criar novo registro
+Integração
 
-Editar registro existente
+As operações devem refletir no banco de dados (Cosmos DB, contêiner content) imediatamente após execução.
 
-Implementar payloads e validações de entrada/saída na API.
+As APIs devem validar se o usuário está autenticado e autorizado antes de executar qualquer operação.
 
-Desenvolver telas de listagem com filtros e visualização detalhada.
+Validação
 
-Implementar formulários para criação e edição de registros, respeitando permissões de acesso.
+Todos os campos obrigatórios devem ser verificados antes de salvar um registro.
 
-Integrar completamente com o Cosmos DB (contêiner content).
+IDs duplicados ou inexistentes devem retornar mensagens claras para o usuário.
 
-Exibir mensagens de feedback claras no frontend.
+Definição de Pronto (DoD – Definition of Done):
 
-Feature #3 – Deploy, testes e entrega do MVP estável
-Descrição:
-Executar testes, corrigir erros e publicar o MVP do Catálogo de Serviços de TI, garantindo estabilidade, segurança e disponibilidade. Incluir configuração de pipeline CI/CD, deploy no Azure e documentação final.
+ Autenticação via Entra ID funcionando no ambiente de testes e produção.
 
-Tópicos principais:
+ RBAC configurado no Entra ID e validado no backend.
 
-Realizar testes funcionais e de integração no frontend e backend.
+ Endpoints de CRUD para POCs e Oportunidades implementados e testados.
 
-Corrigir erros identificados nos testes.
+ Telas de listagem, criação e edição integradas ao backend.
 
-Configurar pipeline CI/CD no GitHub Actions integrado ao Azure.
+ Feedback visual (sucesso/erro) implementado no frontend.
 
-Publicar frontend (Angular) e backend (Azure Functions) em produção.
+ Testes manuais e automatizados executados e aprovados.
 
-Validar funcionamento do SSO e permissões de acesso no ambiente final.
+ Documentação técnica atualizada no repositório.
 
-Entregar documentação de deploy e instruções de uso para a equipe.
+Tarefas sugeridas:
+
+Configurar grupos e permissões no Entra ID (RBAC).
+
+Implementar autenticação via MSAL no frontend Angular.
+
+Criar endpoints no backend (Azure Functions) para CRUD de POCs e Oportunidades.
+
+Integrar frontend e backend para listagem e criação/edição de registros.
+
+Implementar validações de formulário no frontend.
+
+Criar testes unitários e de integração.
+
+Atualizar documentação e instruções no repositório GitHub.

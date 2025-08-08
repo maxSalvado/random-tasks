@@ -1,11 +1,65 @@
-| Método | Rota                      | Recurso   | Descrição                                          |
-| ------ | ------------------------- | --------- | -------------------------------------------------- |
-| `GET`  | `/api/opportunities`      | List      | Retorna todos os registros de oportunidades        |
-| `GET`  | `/api/opportunities/{id}` | Get by ID | Retorna os detalhes de uma oportunidade específica |
-| `POST` | `/api/opportunities`      | Create    | Cria uma nova oportunidade                         |
-| `PUT`  | `/api/opportunities/{id}` | Update    | Atualiza uma oportunidade existente                |
-|        |                           |           |                                                    |
-| `GET`  | `/api/pocs`               | List      | Retorna todos os registros de POCs                 |
-| `GET`  | `/api/pocs/{id}`          | Get by ID | Retorna os detalhes de uma POC específica          |
-| `POST` | `/api/pocs`               | Create    | Cria uma nova POC                                  |
-| `PUT`  | `/api/pocs/{id}`          | Update    | Atualiza uma POC existente                         |
+Feature #1 – Infraestrutura e autenticação
+Descrição:
+Implementar a infraestrutura necessária no Azure para suportar o novo Catálogo de Serviços de TI, garantindo autenticação segura via Entra ID (SSO) e configuração de permissões de acesso (RBAC) para diferentes perfis. Essa Feature estabelece a base tecnológica, segurança e governança de acesso do sistema.
+
+Tópicos principais:
+
+Criar e configurar recursos no Azure:
+
+Azure Functions
+
+Cosmos DB
+
+Azure Static Web Apps
+
+Configurar tenant e aplicativo no Entra ID para autenticação SSO no frontend Angular.
+
+Implementar controle de acesso baseado em papéis (RBAC) via grupos do Entra ID.
+
+Garantir que apenas usuários autenticados da empresa tenham acesso ao sistema.
+
+Documentar no repositório as configurações de infraestrutura e segurança.
+
+Feature #2 – Gerenciar conteúdo (POCs e Oportunidades)
+Descrição:
+Disponibilizar funcionalidades no sistema para criar, editar, atualizar e visualizar registros de POCs e Oportunidades. Incluir endpoints na API (Azure Functions) e telas/formulários no frontend Angular para gestão de conteúdo por editores autorizados.
+
+Tópicos principais:
+
+Criar endpoints na API para:
+
+Listar todos os registros
+
+Buscar por ID
+
+Criar novo registro
+
+Editar registro existente
+
+Implementar payloads e validações de entrada/saída na API.
+
+Desenvolver telas de listagem com filtros e visualização detalhada.
+
+Implementar formulários para criação e edição de registros, respeitando permissões de acesso.
+
+Integrar completamente com o Cosmos DB (contêiner content).
+
+Exibir mensagens de feedback claras no frontend.
+
+Feature #3 – Deploy, testes e entrega do MVP estável
+Descrição:
+Executar testes, corrigir erros e publicar o MVP do Catálogo de Serviços de TI, garantindo estabilidade, segurança e disponibilidade. Incluir configuração de pipeline CI/CD, deploy no Azure e documentação final.
+
+Tópicos principais:
+
+Realizar testes funcionais e de integração no frontend e backend.
+
+Corrigir erros identificados nos testes.
+
+Configurar pipeline CI/CD no GitHub Actions integrado ao Azure.
+
+Publicar frontend (Angular) e backend (Azure Functions) em produção.
+
+Validar funcionamento do SSO e permissões de acesso no ambiente final.
+
+Entregar documentação de deploy e instruções de uso para a equipe.

@@ -1,77 +1,100 @@
-Product Backlog Item – User Story
-Título:
-Gerenciar POCs e Oportunidades com autenticação e controle de permissões via Entra ID
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 
-Descrição:
+@Injectable({ providedIn: 'root' })
+export class ApiClient {
+  private http = inject(HttpClient);
 
-Eu, como editor autorizado do catálogo de serviços, quero acessar o sistema usando minha conta corporativa via SSO (Entra ID) e ter permissão para criar, editar e visualizar registros de POCs e Oportunidades, para que eu possa manter as informações atualizadas e consistentes, garantindo que apenas usuários autorizados possam modificar o conteúdo.
+  get<T>(url: string, params?: Record<string, string | number | boolean>) {
+    const hp = new HttpParams({ fromObject: Object.fromEntries(
+      Object.entries(params ?? {}).map(([k,v]) => [k, String(v)])
+    )});
+    return this.http.get<T>(url, { params: hp });
+  }
+  post<T, B = unknown>(url: string, body: B) {
+    return this.http.post<T>(url, body);
+  }
+  put<T, B = unknown>(url: string, body: B) {
+    return this.http.put<T>(url, body);
+  }
+  delete<T>(url: string) {
+    return this.http.delete<T>(url);
+  }
+}
 
-Critérios de Aceitação:
+----
 
-Autenticação
+import { inject, Injectable } from '@angular/core';
+import { ApiClient } from '../core/api-client';
+import { shareReplay } from 'rxjs';
 
-O sistema deve permitir login apenas para usuários autenticados via SSO (Entra ID).
+export interface User { id: string; name: string; email: string; }
 
-Usuários não autenticados devem ser redirecionados para a tela de login.
+@Injectable({ providedIn: 'root' })
+export class UsersService {
+  private api = inject(ApiClient);
+  private base = '/api/users';
 
-Controle de Acesso (RBAC)
+  list() {
+    // Simple cache example for list
+    return this.api.get<User[]>(this.base).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+  }
 
-Somente membros do grupo de editores configurado no Entra ID podem criar ou editar POCs e Oportunidades.
+  getById(id: string) {
+    return this.api.get<User>(`${this.base}/${id}`);
+  }
 
-Usuários sem permissão de edição podem apenas visualizar as informações.
+  create(user: Pick<User, 'name'|'email'>) {
+    return this.api.post<User, typeof user>(this.base, user);
+  }
 
-Funcionalidade
+  update(id: string, patch: Partial<User>) {
+    return this.api.put<User, Partial<User>>(`${this.base}/${id}`, patch);
+  }
 
-Listar todos os registros de POCs e Oportunidades disponíveis no banco de dados.
+  remove(id: string) {
+    return this.api.delete<void>(`${this.base}/${id}`);
+  }
+}
 
-Buscar um registro específico por ID.
 
-Criar um novo registro, informando todos os campos obrigatórios.
+----
 
-Editar registros existentes, atualizando apenas os campos necessários.
+// auth.interceptor.ts
+import { HttpInterceptorFn } from '@angular/common/http';
 
-Exibir mensagens de sucesso ou erro para cada ação (criação, edição, busca).
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const token = localStorage.getItem('access_token'); // or injected auth service
+  const authReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  return next(authReq);
+};
 
-Integração
 
-As operações devem refletir no banco de dados (Cosmos DB, contêiner content) imediatamente após execução.
 
-As APIs devem validar se o usuário está autenticado e autorizado antes de executar qualquer operação.
 
-Validação
+----
 
-Todos os campos obrigatórios devem ser verificados antes de salvar um registro.
 
-IDs duplicados ou inexistentes devem retornar mensagens claras para o usuário.
 
-Definição de Pronto (DoD – Definition of Done):
+// error.interceptor.ts
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { catchError, throwError } from 'rxjs';
 
- Autenticação via Entra ID funcionando no ambiente de testes e produção.
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  return next(req).pipe(
+    catchError((err: HttpErrorResponse) => {
+      // Map backend errors to a consistent shape
+      const appError = {
+        status: err.status,
+        message: err.error?.message ?? err.message,
+        correlationId: err.headers.get('x-correlation-id') ?? undefined
+      };
+      return throwError(() => appError);
+    })
+  );
+};
 
- RBAC configurado no Entra ID e validado no backend.
 
- Endpoints de CRUD para POCs e Oportunidades implementados e testados.
 
- Telas de listagem, criação e edição integradas ao backend.
 
- Feedback visual (sucesso/erro) implementado no frontend.
-
- Testes manuais e automatizados executados e aprovados.
-
- Documentação técnica atualizada no repositório.
-
-Tarefas sugeridas:
-
-Configurar grupos e permissões no Entra ID (RBAC).
-
-Implementar autenticação via MSAL no frontend Angular.
-
-Criar endpoints no backend (Azure Functions) para CRUD de POCs e Oportunidades.
-
-Integrar frontend e backend para listagem e criação/edição de registros.
-
-Implementar validações de formulário no frontend.
-
-Criar testes unitários e de integração.
-
-Atualizar documentação e instruções no repositório GitHub.
+----

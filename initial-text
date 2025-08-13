@@ -30,3 +30,18 @@ APP_ENV=dev
 
 ----
 
+searchpy-api/
+├─ app/
+│  ├─ __init__.py
+│  ├─ main.py            # FastAPI app & routes
+│  ├─ config.py          # settings/env
+│  ├─ cosmos.py          # client + query helpers
+│  ├─ schemas.py         # pydantic models (optional)
+│  └─ deps.py            # DI (get clients/settings)
+├─ tests/
+│  └─ test_health.py
+├─ .env.example
+├─ .gitignore
+├─ requirements.txt
+├─ runtime.txt           # optional pin for Oryx
+└─ README.md

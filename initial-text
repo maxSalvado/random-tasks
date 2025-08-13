@@ -1,125 +1,34 @@
-Modernize the IT Service Catalog by migrating to a new Angular + Azure web app with Entra ID SSO and secure content management.
+API de Pesquisa e Recomendação (Python + FastAPI + Cosmos DB)
 
+Uma API leve para pesquisar conteúdo, POCs e Oportunidades armazenadas no Azure Cosmos DB usando o Cosmos SQL.
+Desenvolvida com FastAPI para experiência do desenvolvedor (documentação interativa), implantada no Serviço de Aplicativo do Azure (Linux) e conectada com o GitHub Actions CI/CD.
 
-# 🚀 IT Service Catalog Migration to Modern Azure Stack
+Este serviço complementa a API do Azure Functions em C#, focando em cenários de leitura/pesquisa e padrões otimizados para análise. Prioriza intencionalmente o SQL para ajudar desenvolvedores juniores a praticar habilidades de consulta no Cosmos DB antes de adicionarmos NLP ou pesquisa vetorial.
 
-This repository contains the source code and project documentation for migrating the current IT Service Catalog to a modern, secure web application built with **Angular** and **Azure** (Functions + Cosmos DB). The goal is to enhance maintainability, implement SSO via **Microsoft Entra ID**, and provide a user-friendly CMS for internal teams.
+✨ Recursos
+FastAPI com documentação automática (Swagger/OpenAPI em /docs).
 
----
+Consultas no Cosmos DB (Core SQL) com SQL parametrizado.
 
-## 📌 Project Overview
+Pesquisa em endpoints com filtros para idioma, página, tipo e texto livre via CONTAINS.
 
-**Project Title**: Migrate IT Service Catalog to Modern Azure/Angular Stack with Entra ID SSO
+Suporte a CORS para frontends locais (localhost:4200) e de produção.
 
-As an IT solutions company, we aim to migrate our existing service catalog (currently hosted on Vercel) to a new web application using Angular and Azure technologies. The new platform will:
-- Provide secure access via Entra ID Single Sign-On (SSO)
-- Enable content management through a role-based system
-- Support internal reporting on leads and showcase actions
-- Be published as a stable MVP on Azure
+Pronto para implantação do Serviço de Aplicativo do Azure + Ações do GitHub.
 
----
+Testes simples (pytest) e registro em log (loguru).
 
-## ✅ Acceptance Criteria
+Configuração clara do .env (pydantic-settings + python-dotenv).
 
-- ✅ Catalog content is migrated from the existing site to the new Angular app hosted on Azure
-- ✅ SSO authentication via Microsoft Entra ID, allowing access only to internal users
-- ✅ Role-based access: Only authorized groups can add/edit/delete catalog content
-- ✅ CMS-friendly UI for editors to manage catalog items
-- ✅ Reporting table for editors to log leads and showcase actions
-- ✅ MVP is deployed, stable, and accessible via browser
+🧱 Arquitetura
 
----
+app/
+├─ main.py # Aplicativo FastAPI e rotas (/health, /search, /items/{container}/{id})
+├─ config.py # Configurações via variáveis de ambiente (.env)
+├─ cosmos.py # Cliente Cosmos + auxiliar de consulta com nova tentativa
+├─ deps.py # (DI/hooks opcionais, espaço reservado)
+└─ schemas.py # (modelos Pydantic opcionais)
+tests/
+└─ test_health.py
 
-## 🧩 Project Tasks & Estimations
-
-| Task                             | Description                                                                 | Effort Points |
-|----------------------------------|-----------------------------------------------------------------------------|---------------|
-| Discovery & Planning             | Review current site, data structure, and functionality                      | 2             |
-| Data Extraction                  | Extract catalog data (scraping/manual)                                      | 3             |
-| Azure Configuration              | Set up Azure Functions, Cosmos DB, Entra ID (test tenant)                  | 2             |
-| Angular Skeleton                 | Generate Angular app base, routes, layout                                   | 2             |
-| Entra ID SSO Integration         | Implement secure SSO authentication via Entra ID                           | 3             |
-| Role-Based Access Control (RBAC)| Configure group-based access using Entra ID/Azure                          | 2             |
-| Data Modeling                    | Define data schema for Cosmos DB                                            | 1             |
-| Backend API                      | Create CRUD endpoints for catalog and reports                               | 3             |
-| Frontend - Catalog Viewer        | Display list/details of services                                            | 2             |
-| Frontend - Editor UI             | Add/edit/delete content (restricted to editors)                             | 2             |
-| Frontend - Reporting Table       | Form/table for leads and showcase action logging                            | 1             |
-| Data Migration                   | Import data into Cosmos DB via backend                                      | 1             |
-| Testing & Fixes                  | Validate flows, fix bugs                                                    | 2             |
-| Deployment & Handover           | Publish app on Azure, document deployment steps                             | 2             |
-| MVP Demo & Feedback              | Present MVP to stakeholders, gather feedback                                | 1             |
-
-**Total Estimate**: ~29 Effort Points
-
----
-
-## 🔄 Sprint Planning Example
-
-### Sprint 1 – Discovery & Foundations
-- Discovery & Planning
-- Data Extraction
-- Azure Configuration
-- Angular Skeleton
-- Data Modeling
-
-### Sprint 2 – Auth & Core Features
-- Entra ID SSO Integration
-- RBAC Setup
-- Backend API
-- Frontend - Catalog Viewer
-- Data Migration
-
-### Sprint 3 – Editing & Publishing
-- Frontend - Editor UI
-- Frontend - Reporting Table
-- Testing & Fixes
-- Deployment & Handover
-- MVP Demo & Feedback
-
----
-
-## 👤 User Stories
-
-1. As an **IT admin**, I want to migrate the catalog to a modern platform for better usability and control.
-2. As an **employee**, I want to log in securely using Entra ID SSO for a seamless experience.
-3. As a **catalog editor**, I want to manage content through the new app to keep information up to date.
-4. As a **sales/marketing editor**, I want to log leads and showcase actions for engagement tracking.
-5. As a **stakeholder**, I want to access and use a functional MVP with documentation and a deployed instance.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend**: Angular (deployed via Azure Static Web Apps)
-- **Backend**: Azure Functions (Node.js/TypeScript)
-- **Database**: Azure Cosmos DB (NoSQL)
-- **Authentication**: Microsoft Entra ID (SSO)
-- **Access Control**: RBAC via Entra ID or Azure Portal
-- **Deployment**: Azure Cloud (Static Web Apps + Functions)
-
----
-
-## 💡 Recommendations
-
-- Use **Azure Static Web Apps** for deploying the Angular frontend with Azure Functions.
-- Manage user groups and roles directly in **Entra ID/Azure**, avoiding admin UI in the MVP.
-- Consider adding analytics, accessibility improvements, and audit logging **after MVP** release.
-
----
-
-## 📦 Getting Started (to be added in detail)
-
-Coming soon: detailed setup and deployment instructions for development, testing, and production environments.
-
----
-
-## 📣 License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-## 🤝 Contributing
-
-Contributions and feedback are welcome! Please open issues or submit pull requests as needed.
+Pacotes principais: fastapi, uvicorn, azure-cosmos, pydantic-settings, python-dotenv, loguru, tenacity, pytest.

@@ -1,0 +1,141 @@
+#config.py
+from pydantic_settings import BaseSettings
+from typing import List
+import os
+
+class Settings(BaseSettings):
+    COSMOS_URL: str
+    COSMOS_KEY: str
+    COSMOS_DATABASE: str
+    CORS_ORIGINS: str = "http://localhost:4200"
+    APP_ENV: str = "dev"
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+
+
+----
+#cosmos.py
+from azure.cosmos import CosmosClient, PartitionKey
+from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
+from typing import Any, Dict, List, Tuple
+
+class CosmosService:
+    def __init__(self, url: str, key: str, database: str):
+        self._client = CosmosClient(url, credential=key)
+        self._db = self._client.get_database_client(database)
+
+    def container(self, name: str):
+        return self._db.get_container_client(name)
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=8))
+    def query(
+        self,
+        container_name: str,
+        query: str,
+        params: Dict[str, Any] = None,
+        enable_cross_partition: bool = True,
+        max_item_count: int = 50,
+    ) -> List[Dict[str, Any]]:
+        container = self.container(container_name)
+        parameters = [{"name": f"@{k}", "value": v} for k, v in (params or {}).items()]
+        items_iter = container.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=enable_cross_partition,
+            max_item_count=max_item_count,
+        )
+        return [item for item in items_iter]
+
+
+
+---
+
+
+#main.py
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional, List
+from loguru import logger
+
+from app.config import settings
+from app.cosmos import CosmosService
+
+app = FastAPI(title="Search & Recommendation API", version="0.1.0")
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+cosmos = CosmosService(
+    url=settings.COSMOS_URL,
+    key=settings.COSMOS_KEY,
+    database=settings.COSMOS_DATABASE
+)
+
+@app.get("/health")
+def health():
+    return {"ok": True, "env": settings.APP_ENV}
+
+# Basic search: SQL over container with optional filters.
+# Examples:
+# /search?container=content&q=iot&language=en-US&pageKey=automation&limit=20
+@app.get("/search")
+def search(
+    container: str = Query(..., description="Container name: content | pocs | opportunities"),
+    q: Optional[str] = Query(None, description="Text to look for (simple LIKE)"),
+    language: Optional[str] = Query(None, description="en-US | pt-BR | es-ES (if applicable)"),
+    pageKey: Optional[str] = Query(None, description="e.g., automation / customer-experience"),
+    type: Optional[str] = Query(None, description="item | page | poc | opportunity"),
+    limit: int = Query(20, ge=1, le=100),
+):
+    # Build SQL dynamically but safely with parameters:
+    where = []
+    params = {}
+
+    if q:
+        # naive LIKE for juniors to learn SQL in Cosmos
+        where.append("CONTAINS(LOWER(c.title), LOWER(@q)) OR CONTAINS(LOWER(c.description), LOWER(@q))")
+        params["q"] = q
+
+    if language:
+        where.append("c.language = @language")
+        params["language"] = language
+
+    if pageKey:
+        where.append("c.page = @pageKey")
+        params["pageKey"] = pageKey
+
+    if type:
+        where.append("c.type = @type")
+        params["type"] = type
+
+    where_clause = " WHERE " + " AND ".join(f"({w})" for w in where) if where else ""
+    sql = f"SELECT TOP {limit} c FROM c{where_clause}"
+
+    items = cosmos.query(container, sql, params, enable_cross_partition=True, max_item_count=limit)
+    # The SDK returns dicts like {"c": {...}} when using SELECT c; normalize:
+    results = [it.get("c", it) for it in items]
+    return {"count": len(results), "items": results}
+
+# Get by id:
+@app.get("/items/{container}/{id}")
+def get_by_id(container: str, id: str):
+    # If you know the partition key, you can read_item; here we’ll query to keep simple
+    sql = "SELECT c FROM c WHERE c.id = @id"
+    items = cosmos.query(container, sql, params={"id": id}, enable_cross_partition=True, max_item_count=1)
+    if not items:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return items[0].get("c", items[0])

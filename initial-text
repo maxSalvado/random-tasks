@@ -1,34 +1,32 @@
-API de Pesquisa e Recomendação (Python + FastAPI + Cosmos DB)
+pip install fastapi uvicorn[standard] azure-cosmos pydantic-settings python-dotenv loguru tenacity
+pip install pytest httpx
 
-Uma API leve para pesquisar conteúdo, POCs e Oportunidades armazenadas no Azure Cosmos DB usando o Cosmos SQL.
-Desenvolvida com FastAPI para experiência do desenvolvedor (documentação interativa), implantada no Serviço de Aplicativo do Azure (Linux) e conectada com o GitHub Actions CI/CD.
+---
 
-Este serviço complementa a API do Azure Functions em C#, focando em cenários de leitura/pesquisa e padrões otimizados para análise. Prioriza intencionalmente o SQL para ajudar desenvolvedores juniores a praticar habilidades de consulta no Cosmos DB antes de adicionarmos NLP ou pesquisa vetorial.
 
-✨ Recursos
-FastAPI com documentação automática (Swagger/OpenAPI em /docs).
+fastapi
+uvicorn[standard]
+azure-cosmos>=4
+pydantic-settings
+python-dotenv
+loguru
+tenacity
 
-Consultas no Cosmos DB (Core SQL) com SQL parametrizado.
 
-Pesquisa em endpoints com filtros para idioma, página, tipo e texto livre via CONTAINS.
+----
 
-Suporte a CORS para frontends locais (localhost:4200) e de produção.
 
-Pronto para implantação do Serviço de Aplicativo do Azure + Ações do GitHub.
+# Cosmos DB
+COSMOS_URL=https://<your-account>.documents.azure.com:443/
+COSMOS_KEY=<primary-key-or-readonly-key>
+COSMOS_DATABASE=WebsiteContentDB
 
-Testes simples (pytest) e registro em log (loguru).
+# CORS (comma-separated origins, no spaces)
+CORS_ORIGINS=http://localhost:4200,https://your-frontend.example
 
-Configuração clara do .env (pydantic-settings + python-dotenv).
+# App
+APP_ENV=dev
 
-🧱 Arquitetura
 
-app/
-├─ main.py # Aplicativo FastAPI e rotas (/health, /search, /items/{container}/{id})
-├─ config.py # Configurações via variáveis de ambiente (.env)
-├─ cosmos.py # Cliente Cosmos + auxiliar de consulta com nova tentativa
-├─ deps.py # (DI/hooks opcionais, espaço reservado)
-└─ schemas.py # (modelos Pydantic opcionais)
-tests/
-└─ test_health.py
+----
 
-Pacotes principais: fastapi, uvicorn, azure-cosmos, pydantic-settings, python-dotenv, loguru, tenacity, pytest.

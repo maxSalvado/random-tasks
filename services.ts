@@ -1,74 +1,90 @@
-// src/app/core/http/retry.interceptor.ts
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { TimeoutError, throwError, timer } from 'rxjs';
-import { retry, timeout } from 'rxjs/operators';
-import {
-  RETRY_ENABLED,
-  RETRY_MAX_ATTEMPTS,
-  RETRY_BASE_DELAY_MS,
-  RETRY_MAX_DELAY_MS,
-  RETRY_NON_IDEMPOTENT,
-  TIMEOUT_MS
-} from './retry.tokens';
+import { Injectable, signal } from '@angular/core';
 
-// Detect rxjs timeout errors
-function isTimeoutError(err: unknown): boolean {
-  return err instanceof TimeoutError || (typeof err === 'object' && err !== null && (err as any).name === 'TimeoutError');
+export type LocaleCode = 'en-us' | 'pt-br' | 'es-es';
+
+const SUPPORTED: LocaleCode[] = ['en-us', 'pt-br', 'es-es'];
+const STORAGE_KEY = 'app.lang';
+
+@Injectable({ providedIn: 'root' })
+export class LanguageClient {
+  private readonly langSignal = signal<LocaleCode>(this.initLanguage());
+
+  /** Get the current language code (e.g., 'en-us') */
+  getLanguage(): LocaleCode {
+    return this.langSignal();
+  }
+
+  /**
+   * Set language. Accepts anything ('en', 'EN-US', 'pt_PT', etc.),
+   * normalizes to one of: 'en-us' | 'pt-br' | 'es-es'.
+   * Persists to localStorage and returns the normalized value.
+   */
+  setLanguage(input: string): LocaleCode {
+    const normalized = this.normalize(input);
+    this.langSignal.set(normalized);
+    this.saveToStorage(normalized);
+    return normalized;
+  }
+
+  // ---- internals ----------------------------------------------------------
+
+  private initLanguage(): LocaleCode {
+    // 1) stored preference
+    const stored = this.readFromStorage();
+    if (stored) return stored;
+
+    // 2) browser preference
+    const detected = this.detectFromBrowser();
+    this.saveToStorage(detected);
+    return detected;
+  }
+
+  private detectFromBrowser(): LocaleCode {
+    try {
+      if (typeof navigator === 'undefined') return 'en-us';
+      const candidates: string[] = Array.isArray(navigator.languages) && navigator.languages.length
+        ? navigator.languages
+        : (navigator.language ? [navigator.language] : []);
+      for (const c of candidates) {
+        const normalized = this.normalize(c);
+        if (SUPPORTED.includes(normalized)) return normalized;
+      }
+    } catch { /* ignore */ }
+    return 'en-us';
+  }
+
+  private normalize(input?: string): LocaleCode {
+    if (!input) return 'en-us';
+    const lower = input.toLowerCase().replace('_', '-'); // e.g. EN_US -> en-us
+    const primary = lower.split('-')[0];                 // 'en', 'pt', 'es', etc.
+
+    switch (primary) {
+      case 'pt': return 'pt-br';
+      case 'es': return 'es-es';
+      case 'en':
+      default:   return 'en-us';
+    }
+  }
+
+  private readFromStorage(): LocaleCode | null {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      // Validate stored value is supported; otherwise disregard.
+      const val = raw.toLowerCase() as LocaleCode;
+      return SUPPORTED.includes(val) ? val : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private saveToStorage(lang: LocaleCode): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      /* ignore storage failures (private mode, quotas, etc.) */
+    }
+  }
 }
-
-// Detect network/CORS-like errors (browser reports as status 0)
-function isNetworkOrCorsLike(err: unknown): boolean {
-  return err instanceof HttpErrorResponse && err.status === 0;
-}
-
-function isRetryableHttpStatus(err: HttpErrorResponse): boolean {
-  // 408 timeout; 429 rate-limit; 5xx server
-  return err.status === 408 || err.status === 429 || (err.status >= 500 && err.status < 600);
-}
-
-function isRetryable(err: unknown): boolean {
-  if (isTimeoutError(err)) return true;
-  if (isNetworkOrCorsLike(err)) return true;
-  if (err instanceof HttpErrorResponse) return isRetryableHttpStatus(err);
-  return false;
-}
-
-// exponential backoff with jitter
-function backoffMs(tryIndex: number, base: number, cap: number): number {
-  const exp = Math.min(cap, base * Math.pow(2, tryIndex - 1));
-  const jitter = Math.random() * exp * 0.3; // ~30% jitter
-  return Math.floor(exp + jitter);
-}
-
-export const retryInterceptor: HttpInterceptorFn = (req, next) => {
-  const enabled = req.context.get(RETRY_ENABLED);
-  const max = req.context.get(RETRY_MAX_ATTEMPTS);
-  const base = req.context.get(RETRY_BASE_DELAY_MS);
-  const cap  = req.context.get(RETRY_MAX_DELAY_MS);
-  const perAttemptTimeout = req.context.get(TIMEOUT_MS);
-
-  const idempotent = ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
-  const allowNonIdempotent = req.context.get(RETRY_NON_IDEMPOTENT);
-
-  return next(req).pipe(
-    // Give EACH attempt its own timeout window (cold starts can be long)
-    timeout({ first: perAttemptTimeout }),
-    enabled
-      ? retry({
-          count: max,
-          resetOnSuccess: true,
-          delay: (error, retryCount) => {
-            const canRetry =
-              isRetryable(error) &&
-              (idempotent || allowNonIdempotent) &&
-              navigator.onLine !== false;
-
-            if (!canRetry) {
-              return throwError(() => error);
-            }
-            return timer(backoffMs(retryCount, base, cap));
-          }
-        })
-      : (src) => src
-  );
-};

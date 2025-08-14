@@ -1,0 +1,20 @@
+python --version
+git --version
+
+
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+
+Configure environment variables
+
+uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 1234
+uvicorn app.main:app --reload --port 8001
+
+
+pytest -q

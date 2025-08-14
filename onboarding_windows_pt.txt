@@ -1,0 +1,109 @@
+
+Onboarding – Windows 11 + GitHub Desktop
+Projeto: API de Busca e Recomendação (FastAPI + Azure Cosmos DB)
+
+0) O que você vai rodar
+Você vai rodar uma API local que:
+- expõe endpoints em http://127.0.0.1:8000,
+- tem documentação interativa no /docs,
+- consulta o Azure Cosmos DB usando SQL.
+
+1) Instalar as ferramentas (uma vez só)
+
+1.1 GitHub Desktop
+1. Baixar: https://desktop.github.com/
+2. Instalar e entrar com sua conta do GitHub (use a conta da empresa, se for o caso).
+
+1.2 Python 3.11+
+1. Baixar: https://www.python.org/downloads/windows/
+2. Marcar a opção “Add Python to PATH” no instalador.
+3. Verificar no PowerShell:
+   python --version
+   Deve aparecer 3.11.x ou mais recente.
+
+1.3 (Opcional, recomendado) Visual Studio Code
+1. Baixar: https://code.visualstudio.com/
+2. No VS Code, instale a extensão Python (Microsoft).
+
+2) Clonar o repositório (GitHub Desktop)
+1. Abra o GitHub Desktop → File > Clone Repository…
+2. Escolha o repositório da organização → Selecione um caminho local (ex: C:\Dev\searchpy-api).
+3. Clique em Clone.
+4. No GitHub Desktop, abra no VS Code ou no Explorer.
+
+3) Criar o ambiente virtual Python
+1. Abra o Terminal/PowerShell na pasta do projeto (no VS Code: Terminal > New Terminal).
+2. Execute:
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+3. Se der erro de execução, rode como Administrador:
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   Depois ative de novo.
+
+4) Instalar as dependências do projeto
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+
+5) Configurar variáveis de ambiente
+1. Copie o arquivo de exemplo:
+   Copy-Item .env.example .env
+2. Edite o arquivo .env com os valores fornecidos pelo líder técnico:
+   COSMOS_URL=https://<sua-conta-cosmos>.documents.azure.com:443/
+   COSMOS_KEY=<CHAVE>
+   COSMOS_DATABASE=WebsiteContentDB
+   CORS_ORIGINS=http://localhost:4200,https://seu-frontend.exemplo
+   APP_ENV=dev
+3. Não subir o arquivo .env para o Git.
+
+6) Rodar a API localmente
+Com o venv ativado:
+   uvicorn app.main:app --reload
+Abrir no navegador:
+- Docs: http://127.0.0.1:8000/docs
+- Health: http://127.0.0.1:8000/health
+
+Testes rápidos:
+GET /search?container=content&q=iot&language=en-US&limit=10
+GET /items/content/automation_iot_en
+
+7) Rodar os testes
+   pytest -q
+
+8) Fluxo de trabalho com GitHub Desktop
+8.1 Criar branch
+- No GitHub Desktop → Current Branch → New Branch…
+- Nome: feat/descricao-pequena → Create Branch
+
+8.2 Commit & Push
+- Alterar no VS Code.
+- No GitHub Desktop: preencher Summary (mensagem) → Commit to feat/...
+- Push origin
+- Create Pull Request
+
+9) Problemas comuns
+- Python não encontrado → reinstalar com “Add to PATH”.
+- Não ativa venv → rodar Set-ExecutionPolicy RemoteSigned.
+- Erro 401 Cosmos → conferir COSMOS_URL e COSMOS_KEY no .env.
+- CORS → adicionar URL do frontend em CORS_ORIGINS no .env e reiniciar.
+- Porta ocupada → uvicorn app.main:app --reload --port 8001
+
+10) Experiência extra (opcional)
+- Modo escuro no Swagger: verifique no app/main.py se já está configurado.
+- Ferramentas de formatação:
+   pip install black ruff
+   black .
+   ruff check .
+
+11) Próximos passos para estudo
+- Ler código em app/main.py e app/cosmos.py
+- Testar /search com filtros diferentes
+- Criar novo filtro (ex: status)
+- Adicionar teste e rodar pytest -q
+- Abrir PR
+
+12) Comandos rápidos
+   .\.venv\Scripts\Activate.ps1
+   uvicorn app.main:app --reload
+   pytest -q
+
+Bem-vindo(a) ao projeto! 🚀

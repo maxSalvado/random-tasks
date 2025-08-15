@@ -1,85 +1,108 @@
-src/staticwebapp.config.json
-{
-  "navigationFallback": {
-    "rewrite": "/index.html"
+src/app/core/loading.service.ts
+import { Injectable, signal } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class LoadingService {
+  private pending = signal(0);
+  // UI flag the template will read
+  isLoading = signal(false);
+
+  // Anti-flicker timers (tweak as you like)
+  private showDelayMs = 200;   // don’t show for super fast requests
+  private minVisibleMs = 150;  // keep it visible briefly once shown
+  private showTimer: any;
+  private hideTimer: any;
+  private shownAt = 0;
+
+  start() {
+    this.pending.update(v => v + 1);
+
+    // First request → schedule show after a delay
+    if (this.pending() === 1) {
+      clearTimeout(this.hideTimer);
+      this.showTimer = setTimeout(() => {
+        this.isLoading.set(true);
+        this.shownAt = Date.now();
+      }, this.showDelayMs);
+    }
+  }
+
+  stop() {
+    this.pending.update(v => Math.max(0, v - 1));
+    if (this.pending() === 0) {
+      clearTimeout(this.showTimer);
+      const timeVisible = Date.now() - this.shownAt;
+      const remaining = Math.max(this.minVisibleMs - timeVisible, 0);
+
+      this.hideTimer = setTimeout(() => {
+        this.isLoading.set(false);
+      }, remaining);
+    }
   }
 }
+
 
 
 ----
 
 
+  src/app/core/loading.interceptor.ts
 
-  "assets": [
-  "src/favicon.ico",
-  "src/assets",
-  "src/staticwebapp.config.json"
-]
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { finalize } from 'rxjs/operators';
+import { LoadingService } from './loading.service';
+import { SKIP_LOADING } from './http-context-tokens';
+
+export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
+  const loading = inject(LoadingService);
+
+  // Skip assets or explicit opt-out
+  const skip = req.url.startsWith('/assets') || req.context.get(SKIP_LOADING);
+  if (skip) {
+    return next(req);
+  }
+
+  loading.start();
+  return next(req).pipe(
+    finalize(() => loading.stop())
+  );
+};
 
 
---- actions
 
-name: Azure Static Web Apps - Angular 20
+------
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches: [ main ]
+  src/app/shared/global-loading.component.ts
 
-permissions:
-  contents: read
-  pull-requests: write
-  id-token: write
+import { Component } from '@angular/core';
+import { IonicModule } from '@ionic/angular';
+import { LoadingService } from '../core/loading.service';
 
-env:
-  # If your Angular app is in a subfolder, change this from "." to that folder (e.g., apps/web)
-  APP_SOURCE_LOCATION: "."
-  # Angular 17+ outputs to dist/<project-name>/browser
-  BUILD_OUTPUT_LOCATION: "dist/<project-name>/browser"
+@Component({
+  selector: 'app-global-loading',
+  standalone: true,
+  imports: [IonicModule],
+  template: `
+    <ion-loading
+      [isOpen]="loading.isLoading()"
+      message="Loading…"
+      spinner="lines"
+      translucent="true"
+      backdrop-dismiss="false">
+    </ion-loading>
+  `
+})
+export class GlobalLoadingComponent {
+  constructor(public loading: LoadingService) {}
+}
 
-jobs:
-  build_and_deploy:
-    runs-on: ubuntu-latest
-    name: Build and Deploy
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+<!-- Overlay goes at the root -->
+  <app-global-loading></app-global-loading>
 
-      - name: Use Node.js 20 (Angular 20 requirement)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.19.0'
-          cache: 'npm'
-          cache-dependency-path: |
-            ${{ env.APP_SOURCE_LOCATION }}/package-lock.json
 
-      - name: Install dependencies
-        working-directory: ${{ env.APP_SOURCE_LOCATION }}
-        run: npm ci
+---------------
+  
 
-      - name: Build (production)
-        working-directory: ${{ env.APP_SOURCE_LOCATION }}
-        run: npm run build -- --configuration=production
-
-      # ---- Deploy (main branch) OR preview (PR) ----
-      - name: Deploy to Azure Static Web Apps
-        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: upload
-          # We deploy the compiled output directly, so point app_location at the built folder
-          app_location: ${{ env.APP_SOURCE_LOCATION }}/${{ env.BUILD_OUTPUT_LOCATION }}
-          output_location: ""            # not used when skip_app_build = true
-          skip_app_build: true
-
-      # Clean up preview environment when a PR is closed
-      - name: Close Pull Request Preview
-        if: github.event_name == 'pull_request' && github.event.action == 'closed'
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close
+  

@@ -1,111 +1,26 @@
-src/app/core/loading.service.ts
-import { Injectable, signal } from '@angular/core';
+/* Make the overlay completely cover and hide content behind it */
+ion-loading.app-loading-overlay {
+  /* Backdrop (the dim layer covering your app) */
+  --backdrop-opacity: 1;                       // fully opaque
+  --backdrop-color: var(--ion-background-color, #fff); // match your app bg (white by default)
 
-@Injectable({ providedIn: 'root' })
-export class LoadingService {
-  private pending = signal(0);
-  // UI flag the template will read
-  isLoading = signal(false);
+  /* Loading card */
+  --background: transparent;       // remove card background
+  --spinner-color: var(--ion-color-primary, #3880ff);
 
-  // Anti-flicker timers (tweak as you like)
-  private showDelayMs = 200;   // don’t show for super fast requests
-  private minVisibleMs = 150;  // keep it visible briefly once shown
-  private showTimer: any;
-  private hideTimer: any;
-  private shownAt = 0;
-
-  start() {
-    this.pending.update(v => v + 1);
-
-    // First request → schedule show after a delay
-    if (this.pending() === 1) {
-      clearTimeout(this.hideTimer);
-      this.showTimer = setTimeout(() => {
-        this.isLoading.set(true);
-        this.shownAt = Date.now();
-      }, this.showDelayMs);
-    }
-  }
-
-  stop() {
-    this.pending.update(v => Math.max(0, v - 1));
-    if (this.pending() === 0) {
-      clearTimeout(this.showTimer);
-      const timeVisible = Date.now() - this.shownAt;
-      const remaining = Math.max(this.minVisibleMs - timeVisible, 0);
-
-      this.hideTimer = setTimeout(() => {
-        this.isLoading.set(false);
-      }, remaining);
-    }
-  }
+  /* Optional: tweak message style */
+  --color: var(--ion-text-color, #000);
 }
 
-
-
-----
-
-
-  src/app/core/loading.interceptor.ts
-
-import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { finalize } from 'rxjs/operators';
-import { LoadingService } from './loading.service';
-import { SKIP_LOADING } from './http-context-tokens';
-
-export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
-  const loading = inject(LoadingService);
-
-  // Skip assets or explicit opt-out
-  const skip = req.url.startsWith('/assets') || req.context.get(SKIP_LOADING);
-  if (skip) {
-    return next(req);
-  }
-
-  loading.start();
-  return next(req).pipe(
-    finalize(() => loading.stop())
-  );
-};
-
-
-
-------
-
-  src/app/shared/global-loading.component.ts
-
-import { Component } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
-import { LoadingService } from '../core/loading.service';
-
-@Component({
-  selector: 'app-global-loading',
-  standalone: true,
-  imports: [IonicModule],
-  template: `
-    <ion-loading
-      [isOpen]="loading.isLoading()"
-      message="Loading…"
-      spinner="lines"
-      translucent="true"
-      backdrop-dismiss="false">
-    </ion-loading>
-  `
-})
-export class GlobalLoadingComponent {
-  constructor(public loading: LoadingService) {}
+/* Extra polish for the wrapper/content parts if available */
+ion-loading.app-loading-overlay::part(content) {
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.5rem 1rem;
 }
 
-
-<!-- Overlay goes at the root -->
-  <app-global-loading></app-global-loading>
-
-
----------------
-  
-import { HttpContextToken } from '@angular/common/http';
-
-export const SKIP_LOADING = new HttpContextToken<boolean>(() => false);
-
-  
+ion-loading.app-loading-overlay::part(backdrop) {
+  /* Redundant with vars above, but forces full cover if needed */
+  background: var(--ion-background-color, #fff);
+  opacity: 1;
+}

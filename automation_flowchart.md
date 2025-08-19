@@ -1,0 +1,80 @@
+# Architecture Flowchart
+
+Below diagram renders directly on GitHub.
+
+```mermaid
+
+flowchart TD
+  %% ===================== Lanes / Systems =====================
+  subgraph FE[Frontend - Power Apps or Web (React/Angular)]
+    U[User opens app] --> UPLOAD[Upload "Spreadsheet A" (.xlsx)]
+    note right of UPLOAD: Multi-sheet allowed
+  end
+
+  subgraph PA1[Power Automate - Flow 1 (Upload & Transform)]
+    PA_SAVE[Save file to SharePoint / Azure Blob<br/>Generate Run ID]
+    CALL_TRANSFORM[HTTP (OAuth) → FastAPI /transform<br/>(file URL, run_id)]
+    PA_RESP[Respond to app: draft rows + diagnostics<br/>+ (optional) draft B .xlsx URL]
+  end
+
+  subgraph SVC[Python FastAPI Service]
+    F_INGEST[Ingest A (multi-sheet aware):<br/>• Detect sheets by name/headers<br/>• Normalize header aliases<br/>• Validate required cols/types]
+    F_ENRICH[Enrich rows via External APIs:<br/>• Batch / async calls<br/>• Retry & backoff<br/>• (Optional) caching]
+    F_MAP[Map A → B schema (per-sheet config)]
+    F_DRAFT[Produce Draft B (JSON) + per-cell diagnostics<br/>(optional draft B .xlsx)]
+    F_VALIDATE[Validate user-completed data]
+    F_FINAL[Generate final Spreadsheet B from template (.xltx)<br/>• Correct sheet names & column order<br/>• Log sheet (hashes, versions)<br/>• Store to Blob]
+  end
+
+  subgraph EXT[External API Services]
+    EXT1[(Lookup / device / network APIs)]
+  end
+
+  subgraph PA2[Power Automate - Flow 2 (Validate & Ticket)]
+    CALL_VALIDATE[HTTP → /validate]
+    DECISION{Violations?}
+    CALL_FINAL[HTTP → /finalize]
+    SNOW[Create ServiceNow ticket<br/>Attach Spreadsheet B]
+    NOTIFY[Notify requester (Teams/Email)<br/>Ticket # + links]
+  end
+
+  subgraph OBS[Observability & Secrets]
+    KV[(Azure Key Vault<br/>API keys, ServiceNow creds)]
+    AI[(App Insights / Logs<br/>Run ID correlation)]
+    REDIS[(Redis cache<br/>optional)]
+  end
+
+  %% ===================== Main Flow =====================
+  FE --> PA_SAVE
+  PA_SAVE --> CALL_TRANSFORM
+  CALL_TRANSFORM --> F_INGEST
+  F_INGEST --> F_ENRICH
+  F_ENRICH --> EXT1
+  EXT1 --> F_ENRICH
+  F_ENRICH --> F_MAP
+  F_MAP --> F_DRAFT
+  F_DRAFT --> PA_RESP
+  PA_RESP --> FE
+
+  %% User review and continue
+  FE --> CALL_VALIDATE
+  CALL_VALIDATE --> F_VALIDATE
+  F_VALIDATE --> DECISION
+  DECISION -- Yes --> FE
+  DECISION -- No --> CALL_FINAL
+  CALL_FINAL --> F_FINAL
+  F_FINAL --> PA2
+  PA2 --> SNOW
+  SNOW --> NOTIFY
+
+  %% ===================== Cross-cutting concerns =====================
+  SVC -. uses .-> KV
+  SVC -. telemetry .-> AI
+  F_ENRICH -. cache .-> REDIS
+  PA1 -. audit/run history .-> AI
+  PA2 -. audit/run history .-> AI
+
+  %% ===================== Security Notes =====================
+  %% All HTTP calls secured via Entra ID (OAuth 2.0) / Managed Identity
+
+```

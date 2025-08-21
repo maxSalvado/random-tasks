@@ -10,3 +10,22 @@ printf '{ "auths": {} }\n' > ~/.docker-ecrpub/config.json
 DOCKER_CONFIG=~/.docker-ecrpub \
 aws ecr-public get-login-password --region "$REGION_PUB" \
 | DOCKER_CONFIG=~/.docker-ecrpub docker login --username AWS --password-stdin public.ecr.aws
+
+
+
+
+# 3) Get your canonical public repo URI (includes your alias/namespace)
+PUBLIC_REPO_URI=$(
+  aws ecr-public describe-repositories --region "$REGION_PUB" \
+  --repository-names "$PUBLIC_REPO_NAME" \
+  --query 'repositories[0].repositoryUri' --output text
+)
+echo "Public URI: $PUBLIC_REPO_URI"   # e.g. public.ecr.aws/<your-alias>/monabot-api
+
+# 4) Build / tag / push
+TAG="v$(date +%Y%m%d-%H%M)"
+docker build -t "$PUBLIC_REPO_NAME:$TAG" .
+docker tag   "$PUBLIC_REPO_NAME:$TAG" "$PUBLIC_REPO_URI:$TAG"
+DOCKER_CONFIG=~/.docker-ecrpub docker push "$PUBLIC_REPO_URI:$TAG"
+
+# (Keep DOCKER_CONFIG=~/.docker-ecrpub for any future docker login/push to ECR Public)

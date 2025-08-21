@@ -1,2 +1,12 @@
+# 0) Vars
+export REGION_PUB=us-east-1
+export PUBLIC_REPO_NAME=monabot-api
+
+# 1) Make an isolated Docker config (no credential helpers)
+mkdir -p ~/.docker-ecrpub
+printf '{ "auths": {} }\n' > ~/.docker-ecrpub/config.json
+
+# 2) Fresh login to ECR Public (store creds in the isolated config)
+DOCKER_CONFIG=~/.docker-ecrpub \
 aws ecr-public get-login-password --region "$REGION_PUB" \
-| docker login --username AWS --password-stdin public.ecr.aws
+| DOCKER_CONFIG=~/.docker-ecrpub docker login --username AWS --password-stdin public.ecr.aws

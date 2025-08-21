@@ -1,7 +1,2 @@
-PUBLIC_REPO_URI=$(
-  aws ecr-public describe-repositories \
-    --region "$REGION_PUB" \
-    --repository-names "$PUBLIC_REPO_NAME" \
-    --query 'repositories[0].repositoryUri' \
-    --output text
-)
+aws ecr-public get-login-password --region "$REGION_PUB" \
+| docker login --username AWS --password-stdin public.ecr.aws

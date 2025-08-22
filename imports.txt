@@ -25,3 +25,37 @@ docker tag   "$PUBLIC_REPO_NAME:$TAG" "$PUBLIC_REPO_URI:$TAG"
 DOCKER_CONFIG=~/.docker-ecrpub docker push "$PUBLIC_REPO_URI:$TAG"
 
 echo "Pushed: $PUBLIC_REPO_URI:$TAG"
+
+
+
+------
+
+
+
+# fill your ECS identifiers
+export CLUSTER="<your-ecs-cluster>"
+export SERVICE="<your-ecs-service>"
+export CONTAINER_NAME="<your-container-name>"
+
+# current task def
+TD_ARN=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+  --query "services[0].taskDefinition" --output text)
+
+# fetch body
+aws ecs describe-task-definition --task-definition "$TD_ARN" \
+  --query "taskDefinition" > td.json
+
+# swap image to the new public tag
+jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' td.json \
+| jq --arg name "$CONTAINER_NAME" --arg img "$PUBLIC_REPO_URI:$TAG" \
+     '.containerDefinitions = (.containerDefinitions
+        | map(if .name == $name then .image = $img | . else . end))' \
+> td.updated.json
+
+# register + roll
+NEW_TD_ARN=$(aws ecs register-task-definition \
+  --cli-input-json file://td.updated.json \
+  --query "taskDefinition.taskDefinitionArn" --output text)
+
+aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --task-definition "$NEW_TD_ARN" >/dev/null
+aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"

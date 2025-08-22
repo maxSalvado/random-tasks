@@ -15,3 +15,27 @@ PENDING=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SERVICE" --de
   --query "tasks[].{id:taskArn,status:lastStatus,health:healthStatus,stoppedReason:stoppedReason,containers:containers[*].{name:name,reason:reason,lastStatus:lastStatus}}"
 [ -n "$PENDING" ] && aws ecs describe-tasks --cluster "$CLUSTER" --tasks $PENDING \
   --query "tasks[].{id:taskArn,status:lastStatus,stoppedReason:stoppedReason,containers:containers[*].{name:name,reason:reason,lastStatus:lastStatus}}"
+
+
+
+CF functions:
+function handler(event) {
+  var req = event.request, h = req.headers;
+
+  var referer = h.referer && h.referer.value || "";
+  var secSite = h['sec-fetch-site'] && h['sec-fetch-site'].value || "";
+  var secMode = h['sec-fetch-mode'] && h['sec-fetch-mode'].value || "";
+
+  var sameOrigin = referer.startsWith("https://<your-distribution>.cloudfront.net/");
+  var modeOk = (secMode === "cors" || secMode === "navigate" || secMode === "same-origin");
+
+  if (!(secSite === "same-origin" && modeOk && sameOrigin)) {
+    return {
+      statusCode: 403,
+      statusDescription: "Forbidden",
+      headers: { "content-type": { value: "application/json" } },
+      body: JSON.stringify({ detail: "Forbidden" })
+    };
+  }
+  return req;
+}

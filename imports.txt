@@ -27,3 +27,11 @@ async def require_edge_secret(request: Request, call_next):
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+TO TEST:
+SECRET='<your-edge-secret-here>'
+curl -i -X POST http://localhost:8000/api/query \
+  -H 'Content-Type: application/json' \
+  -H "X-Edge-Secret: $SECRET" \
+  --data-raw '{"user_input":"hello from curl"}'

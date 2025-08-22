@@ -1,100 +1,29 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+# app/main.py
+import os, hmac
+from fastapi import FastAPI, Request
+from starlette.responses import JSONResponse
 
-@Injectable({ providedIn: 'root' })
-export class ApiClient {
-  private http = inject(HttpClient);
+app = FastAPI()
 
-  get<T>(url: string, params?: Record<string, string | number | boolean>) {
-    const hp = new HttpParams({ fromObject: Object.fromEntries(
-      Object.entries(params ?? {}).map(([k,v]) => [k, String(v)])
-    )});
-    return this.http.get<T>(url, { params: hp });
-  }
-  post<T, B = unknown>(url: string, body: B) {
-    return this.http.post<T>(url, body);
-  }
-  put<T, B = unknown>(url: string, body: B) {
-    return this.http.put<T>(url, body);
-  }
-  delete<T>(url: string) {
-    return this.http.delete<T>(url);
-  }
-}
+EDGE_SHARED_SECRET = os.environ.get("EDGE_SHARED_SECRET", "")
+ALLOW_PATHS = {"/health", "/livez", "/readyz"}  # allow ALB TG health checks etc.
 
-----
+@app.middleware("http")
+async def require_edge_secret(request: Request, call_next):
+    # Allow health (ALB checks won't have the secret)
+    if request.url.path in ALLOW_PATHS:
+        return await call_next(request)
 
-import { inject, Injectable } from '@angular/core';
-import { ApiClient } from '../core/api-client';
-import { shareReplay } from 'rxjs';
+    expected = EDGE_SHARED_SECRET
+    got = request.headers.get("x-edge-secret", "")
 
-export interface User { id: string; name: string; email: string; }
+    # Deny if secret is missing or doesn't match (constant-time compare)
+    if not expected or not hmac.compare_digest(got, expected):
+        return JSONResponse({"detail": "Forbidden"}, status_code=403)
 
-@Injectable({ providedIn: 'root' })
-export class UsersService {
-  private api = inject(ApiClient);
-  private base = '/api/users';
+    return await call_next(request)
 
-  list() {
-    // Simple cache example for list
-    return this.api.get<User[]>(this.base).pipe(shareReplay({ bufferSize: 1, refCount: true }));
-  }
-
-  getById(id: string) {
-    return this.api.get<User>(`${this.base}/${id}`);
-  }
-
-  create(user: Pick<User, 'name'|'email'>) {
-    return this.api.post<User, typeof user>(this.base, user);
-  }
-
-  update(id: string, patch: Partial<User>) {
-    return this.api.put<User, Partial<User>>(`${this.base}/${id}`, patch);
-  }
-
-  remove(id: string) {
-    return this.api.delete<void>(`${this.base}/${id}`);
-  }
-}
-
-
-----
-
-// auth.interceptor.ts
-import { HttpInterceptorFn } from '@angular/common/http';
-
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = localStorage.getItem('access_token'); // or injected auth service
-  const authReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
-  return next(authReq);
-};
-
-
-
-
-----
-
-
-
-// error.interceptor.ts
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
-
-export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  return next(req).pipe(
-    catchError((err: HttpErrorResponse) => {
-      // Map backend errors to a consistent shape
-      const appError = {
-        status: err.status,
-        message: err.error?.message ?? err.message,
-        correlationId: err.headers.get('x-correlation-id') ?? undefined
-      };
-      return throwError(() => appError);
-    })
-  );
-};
-
-
-
-
-----
+# Example health route (unprotected)
+@app.get("/health")
+def health():
+    return {"ok": True}

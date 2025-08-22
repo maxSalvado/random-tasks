@@ -1,37 +1,27 @@
-# app/main.py
-import os, hmac
-from fastapi import FastAPI, Request
-from starlette.responses import JSONResponse
+# vars
+export REGION_PUB=us-east-1
+export PUBLIC_REPO_NAME=monabot-api
+export TAG="v$(date +%Y%m%d-%H%M)"
 
-app = FastAPI()
+# isolated docker config (bypasses Windows cred helper)
+mkdir -p ~/.docker-ecrpub
+printf '{ "auths": {} }\n' > ~/.docker-ecrpub/config.json
 
-EDGE_SHARED_SECRET = os.environ.get("EDGE_SHARED_SECRET", "")
-ALLOW_PATHS = {"/health", "/livez", "/readyz"}  # allow ALB TG health checks etc.
+# login to public ECR
+DOCKER_CONFIG=~/.docker-ecrpub \
+aws ecr-public get-login-password --region "$REGION_PUB" \
+| DOCKER_CONFIG=~/.docker-ecrpub docker login --username AWS --password-stdin public.ecr.aws
 
-@app.middleware("http")
-async def require_edge_secret(request: Request, call_next):
-    # Allow health (ALB checks won't have the secret)
-    if request.url.path in ALLOW_PATHS:
-        return await call_next(request)
+# find your canonical repo URI
+PUBLIC_REPO_URI=$(
+  aws ecr-public describe-repositories --region "$REGION_PUB" \
+  --repository-names "$PUBLIC_REPO_NAME" \
+  --query 'repositories[0].repositoryUri' --output text
+)
 
-    expected = EDGE_SHARED_SECRET
-    got = request.headers.get("x-edge-secret", "")
+# build / tag / push
+docker build -t "$PUBLIC_REPO_NAME:$TAG" .
+docker tag   "$PUBLIC_REPO_NAME:$TAG" "$PUBLIC_REPO_URI:$TAG"
+DOCKER_CONFIG=~/.docker-ecrpub docker push "$PUBLIC_REPO_URI:$TAG"
 
-    # Deny if secret is missing or doesn't match (constant-time compare)
-    if not expected or not hmac.compare_digest(got, expected):
-        return JSONResponse({"detail": "Forbidden"}, status_code=403)
-
-    return await call_next(request)
-
-# Example health route (unprotected)
-@app.get("/health")
-def health():
-    return {"ok": True}
-
-
-TO TEST:
-SECRET='<your-edge-secret-here>'
-curl -i -X POST http://localhost:8000/api/query \
-  -H 'Content-Type: application/json' \
-  -H "X-Edge-Secret: $SECRET" \
-  --data-raw '{"user_input":"hello from curl"}'
+echo "Pushed: $PUBLIC_REPO_URI:$TAG"

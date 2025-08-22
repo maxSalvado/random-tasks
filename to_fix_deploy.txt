@@ -1,0 +1,17 @@
+# Set your ids
+export CLUSTER="<your-ecs-cluster>"
+export SERVICE="<your-ecs-service>"
+
+# A) Service events (most helpful one-liners)
+aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+  --query "services[0].events[0:10].[createdAt,message]" --output table
+
+# B) What tasks are in this service?
+TASKS=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SERVICE" --desired-status RUNNING --output text)
+PENDING=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SERVICE" --desired-status PENDING --output text)
+
+# C) Describe them (look at lastStatus/stopReason/container reasons)
+[ -n "$TASKS" ] && aws ecs describe-tasks --cluster "$CLUSTER" --tasks $TASKS \
+  --query "tasks[].{id:taskArn,status:lastStatus,health:healthStatus,stoppedReason:stoppedReason,containers:containers[*].{name:name,reason:reason,lastStatus:lastStatus}}"
+[ -n "$PENDING" ] && aws ecs describe-tasks --cluster "$CLUSTER" --tasks $PENDING \
+  --query "tasks[].{id:taskArn,status:lastStatus,stoppedReason:stoppedReason,containers:containers[*].{name:name,reason:reason,lastStatus:lastStatus}}"
